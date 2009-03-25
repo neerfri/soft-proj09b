@@ -1,2 +1,11 @@
 .project
 .cproject
+
+assign1/approximate_pi/approximate_pi
+assign1/approximate_pi/approximate_pi.o
+
+assign1/check_policy/check_policy
+assign1/check_policy/check_policy.o
+
+assign1/is_dividable/is_dividable
+assign1/is_dividable/is_dividable.o
