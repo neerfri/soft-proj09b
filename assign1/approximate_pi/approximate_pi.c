@@ -52,6 +52,7 @@ int main(void) {
 	srand(1234);
 	for(i=0; i<8; i++) {
 		n = pow(10,i+1);
+		/*printf("%d:", n)*/
 		printf("%f\n", approximate_pi(n));
 	}
 	return(0);
