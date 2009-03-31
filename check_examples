@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+
+require 'fileutils'
+
+args = ARGV.dup
+if args.count < 2
+  puts "Usage: ./check_examples.rb ./my_binary (n..m | n m k).  for example ./check_examples 1..4 will check examples 1 to 4 inclusive."
+  exit(1);
+end
+cmd = args.shift 
+print_only = false
+sequence = args.map do |a| 
+  case
+    when a =~ /(\d+)\.\.(\d+)/
+      (($1)..($2)).to_a
+    when a =~ /^(-\d)$/
+      puts "'-' is not yet implemented"
+    when a == "-p"
+      print_only = true
+    else
+      a
+  end
+end.flatten.compact
+
+#p cmd
+#p sequence
+#exit(0)
+
+temp_file = "./tmp#{Time.now.to_i}.out"
+sequence.each do |index|
+  invoke_command = "#{cmd} < ./examples/#{index}.in > #{temp_file}"
+  diff_command =  "diff ./examples/#{index}.out #{temp_file}"
+  if print_only
+    puts "#Example #{index}.out:"
+    puts invoke_command
+    puts diff_command
+    puts
+  else
+    `#{invoke_command}`
+    diff_output = `#{diff_command}`
+    FileUtils.rm_f temp_file
+    puts "Problem with example #{index}.out\n#{diff_output}" unless diff_output.empty?
+  end
+end
