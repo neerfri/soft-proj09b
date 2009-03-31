@@ -35,6 +35,6 @@ sequence.each do |index|
     `#{invoke_command}`
     diff_output = `#{diff_command}`
     FileUtils.rm_f temp_file
-    puts "Problem with example #{index}.out\n#{diff_output}" unless diff_output.empty?
+    puts "Problem with example #{index}.out\n#{diff_output}\n" unless diff_output.empty?
   end
 end
