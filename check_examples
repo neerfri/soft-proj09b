@@ -22,10 +22,6 @@ sequence = args.map do |a|
   end
 end.flatten.compact
 
-#p cmd
-#p sequence
-#exit(0)
-
 temp_file = "./tmp#{Time.now.to_i}.out"
 sequence.each do |index|
   invoke_command = "#{cmd} < ./examples/#{index}.in > #{temp_file}"
