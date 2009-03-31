@@ -18,14 +18,6 @@ struct MyPoint {
 double approximate_pi(int number_of_runs);
 extern double pow(double, double);
 
-int number_of_points_in_circle(int num_of_samples) {
-	double x, y;
-	x = (double)rand()/RAND_MAX;
-	y = (double)rand()/RAND_MAX;
-	printf("%f, %f\n",x ,y);
-	return(0);
-}
-
 void randomize_point(struct MyPoint *p) {
 	(*p).x = (double)rand()/RAND_MAX;
 	(*p).y = (double)rand()/RAND_MAX;
