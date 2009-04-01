@@ -1,7 +1,6 @@
-Full Name: Neer Friedman
-Id No 1: 039649819
-User Name 1: nirfrie2
-
-Id No 2: partner-id
-User Name 2: partner-user-name
+Full Name: Lea Stolowicz
+Id No 2: 015373665
+User Name 2: leastolo
+Id No 2: 039649819
+User Name 2: nirfrie2
 Assignment No: 1

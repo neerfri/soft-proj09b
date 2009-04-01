@@ -1,10 +1,11 @@
 /*
 //============================================================================
 // Name        : soft-proj09b.cpp
-// Author      : Neer Friedman
+// Author      : Neer Friedman & Lea Stolowicz
 // Version     :
 // Copyright   : Your copyright notice
-// Description : Hello World in C, Ansi-style
+// Description : Gives an approximation to pi, according to the exercise 
+directions
 //============================================================================
 */
 #include <stdio.h>
