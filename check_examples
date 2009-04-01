@@ -17,6 +17,7 @@ sequence = args.map do |a|
       puts "'-' is not yet implemented"
     when a == "-p"
       print_only = true
+      nil
     else
       a
   end
