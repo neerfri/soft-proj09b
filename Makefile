@@ -8,9 +8,10 @@
 APPROXIMATE_PI = assign1/approximate_pi
 CHECK_POLICY = assign1/check_policy
 IS_DIVIDABLE = assign1/is_dividable
+STRING_EDITOR = assign2/string_editor
 
 
-SUBDIRS = $(APPROXIMATE_PI) $(CHECK_POLICY) $(IS_DIVIDABLE)
+SUBDIRS = $(APPROXIMATE_PI) $(CHECK_POLICY) $(IS_DIVIDABLE) $(STRING_EDITOR)
 
 # Default Target
 all:
