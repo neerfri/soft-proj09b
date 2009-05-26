@@ -9,3 +9,7 @@ assign1/check_policy/check_policy.o
 
 assign1/is_dividable/is_dividable
 assign1/is_dividable/is_dividable.o
+
+assign2/string_editor/string_editor
+assign2/string_editor/string_editor.o
+assign2/string_editor/my_list.o
