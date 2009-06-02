@@ -87,9 +87,9 @@ LINK linked_list_find_first_data(LINK head, DATA data) {
 	return(linked_list_find(head, prvt_linked_list_data_finder, &data));
 }
 
-LINK linked_list_find_last_data_or_tail(LINK head, DATA data) {
+LINK linked_list_find_last_data_or_tail(LINK *head, DATA data) {
 	LINK ptr, ret = NULL;
-	for(ptr=head;(ptr = linked_list_find_first_data(ptr, data)) != NULL; ptr = ptr->next) {
+	for(ptr=(*head);(ptr = linked_list_find_first_data(ptr, data)) != NULL; ptr = ptr->next) {
 		ret = ptr;
 	}
 	return ret;
@@ -142,7 +142,7 @@ void prvt_linked_list_data_shifter(LINK element) {
  * REQUIRED METHODS FOR THE ASSIGNMENT
  */
 
-void InsertAfterToList(LINK head, DATA after, DATA to_insert) {
+void InsertAfterToList(LINK *head, DATA after, DATA to_insert) {
 	LINK element_before = linked_list_find_last_data_or_tail(head, after);
 	linked_list_insert_list(&element_before, linked_list_create_with_data(to_insert));
 }
@@ -153,9 +153,20 @@ void AppendToList(LINK *head, DATA data) {
 	linked_list_insert_list(tail, new_list);
 }
 
-void DeleteCharFromList(LINK head, int index) {
-	LINK element_to_remove = *linked_list_pointer_to_index(&head, index);
-	linked_list_for_each(element_to_remove, prvt_linked_list_data_shifter);
+void DeleteCharFromList(LINK *head, int index) {
+	LINK element_before_to_remove, element_to_remove;
+	if(index == 0) {
+		element_to_remove = (*head);
+		(*head) = element_to_remove->next;
+		free(element_to_remove);
+	} else {
+		element_before_to_remove = *linked_list_pointer_to_index(head, index-1);
+		element_to_remove = element_before_to_remove->next;
+		element_before_to_remove->next = element_to_remove->next;
+		free(element_to_remove);
+	}
+	 
+	/*linked_list_for_each(element_to_remove, prvt_linked_list_data_shifter);*/
 }
 
 void ReplaceInList(LINK head, DATA search, DATA replace) {
@@ -183,16 +194,17 @@ void ReverseList(LINK *head) {
 	}
 	ptr = *head;
 	*head = new_list;
-	DeleteList(ptr);
+	DeleteList(&ptr);
 }
 
 void PrintList(LINK head) {
 	linked_list_for_each(head, prvt_linked_list_data_printer);
 }
 
-void DeleteList(LINK head) {
-	if (head != NULL) {
-		DeleteList(head->next);
-		free(head);
+void DeleteList(LINK *head) {
+	if ((*head) != NULL) {
+		DeleteList(&((*head)->next));
+		free(*head);
 	}
+	*head = NULL;
 }

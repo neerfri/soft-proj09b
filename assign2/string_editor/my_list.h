@@ -86,15 +86,15 @@ void prvt_linked_list_data_shifter(LINK element);
 /*insert 'to_insert' after the last occurrence of 'after' in the list
  * if after is not in the list, insert 'to_insert' at the end
  */
-void InsertAfterToList(LINK head, DATA after, DATA to_insert);
+void InsertAfterToList(LINK *head, DATA after, DATA to_insert);
 
 /* insert 'data' at the end of the list 
  */
 void AppendToList(LINK *head, DATA data);
 
-/* delete char with index 'index' from list 'head'
+/* delete element with index 'index' from list 'head'
  */
-void DeleteCharFromList(LINK head, int index);
+void DeleteCharFromList(LINK *head, int index);
 
 /* replace each occurrence of 'search' with 'replace'
  */
@@ -114,4 +114,4 @@ void PrintList(LINK head);
 
 /* delete the whole list
  */
-void DeleteList(LINK head);
+void DeleteList(LINK *head);
