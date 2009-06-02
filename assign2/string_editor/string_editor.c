@@ -9,82 +9,79 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "my_list.h"
 
+#define CHECK_ALPHA_NUMERIC_OR_EXIT(chr) if (!isalnum(chr)) printf("Illegal char enterd: '%c'\nAborting.", chr); if (!isalnum(chr)) exit(EXIT_FAILURE); 
+
+
+
 void main_loop() {
+	LINK *head;
 	char chr;
 	char c1, c2;
 	int index;
-	LINK *head;
 	
-	while((chr = tolower(getchar()))) {
-		switch(chr)
-		 {
-		  case 'q':
-		    return;
-		  case 'i':
-		    c1 = getchar();
-		    c2 = getchar();
-		    InsertAfterToList(head, c1, c2);
-		    break;
-		  case 'a':
-		    c1 = getchar();
-		    AppendToList(head, c1);
-		  case 'd':
-		    scanf("%d", &index);
-		    DeleteCharFromList(head, index);
-		  case 'p':
-		    PrintList(*head);
-		    break;
-		  case '\n':
-		    break;
-		  default:
-		    printf("unknown command.\n");
-		 }
-		 /*getchar();  to waste the new line char */
+	head = malloc(sizeof(LINK *));
+	*head = linked_list_create_empty();
+	
+	while(1) {
+		while((chr = tolower(getchar()))) {
+			if(isalnum(chr)) {
+				break;
+			}
+		}
+		switch(chr) {
+		case 'q':
+			return;
+		case 'i':
+			c1 = getchar();
+			c2 = getchar();
+			CHECK_ALPHA_NUMERIC_OR_EXIT(c1)
+			CHECK_ALPHA_NUMERIC_OR_EXIT(c2)
+			InsertAfterToList(head, c1, c2);
+			break;
+		case 'a':
+			c1 = getchar();
+			CHECK_ALPHA_NUMERIC_OR_EXIT(c1)
+			AppendToList(head, c1);
+			break;
+		case 'd':
+			scanf("%d", &index);
+			DeleteCharFromList(head, index);
+			break;
+		case 'r':
+			c1 = getchar();
+			c2 = getchar();
+			CHECK_ALPHA_NUMERIC_OR_EXIT(c1)
+			CHECK_ALPHA_NUMERIC_OR_EXIT(c2)
+			ReplaceInList(*head, c1, c2);
+			break;
+		case 'e':
+			c1 = getchar();
+			CHECK_ALPHA_NUMERIC_OR_EXIT(c1)
+			EraseFromList(head, c1);
+			break;
+		case 'm':
+			ReverseList(head);
+			break;
+		case 'f':
+			DeleteList(head);
+			break;
+		case 'p':
+			printf("[");
+			PrintList(*head);
+			printf("]\n");
+			break;
+		case '\n':
+			break;
+		default:
+			printf("unknown command '%c'.\n",chr);
+		}
 	}
 }
 
 int main(void) {
-	/* 
-	LINK head, found;
-	char chr = 'c';
-	printf("Hello string editor !\n");
-	head = linked_list_create_with_data('a');
-	linked_list_insert_list_in_index(head, linked_list_create_with_data('c'), 0);
-	linked_list_insert_list_in_index(head, linked_list_create_with_data('d'), 1);
-	linked_list_insert_list_in_index(head, linked_list_create_with_data('b'), 0);
-	linked_list_for_each(head, print_element_data);
-	printf("\n");
-	found = linked_list_find(head, char_finder, &chr);
-	linked_list_for_each(found, print_element_data);
-	*/
-	LINK *head;
-	char c1='a',c2='b',c3='c',c4='d',c5='e',c6='f';
-	*head = linked_list_create_empty();
-	/*DeleteCharFromList(*head, 0);*/
-	AppendToList(head, c1);
-	InsertAfterToList(*head, c1, c3);
-	InsertAfterToList(*head, c1, c2);
-	AppendToList(head, c4);
-	/*DeleteCharFromList(head, 1);*/
-	DeleteList(head);
-	AppendToList(head, c5);
-	/*
-	InsertAfterToList(*head, c1, c2);
-	ReplaceInList(*head, 'd', 'b');
-	ReplaceInList(*head, 'b', 'f');
-	*/
-	  
-	/*printf("linked_list_count: %d\n", linked_list_count(head));*/
-	/*head = linked_list_create_with_data(c1);*/
-	/*AppendToList(head, c2);*/
-	/*EraseFromList(head, 'f');
-	ReverseList(head);
-	*/
-	PrintList(*head);
-	printf("\n");
-	/* DeleteList(*head);*/
 	main_loop();
 	return EXIT_SUCCESS;
 }

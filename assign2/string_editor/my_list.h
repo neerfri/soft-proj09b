@@ -65,7 +65,7 @@ LINK linked_list_find_first_data(LINK head, DATA data);
 
 /* find the last occurrence of data or the last element of the list
  */
-LINK linked_list_find_last_data_or_tail(LINK head, DATA data);
+LINK linked_list_find_last_data(LINK head, DATA data);
 
 /* remove element LINK from the list returns the LINK to the following ptr (the one who took his place)
  */

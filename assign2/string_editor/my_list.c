@@ -87,9 +87,9 @@ LINK linked_list_find_first_data(LINK head, DATA data) {
 	return(linked_list_find(head, prvt_linked_list_data_finder, &data));
 }
 
-LINK linked_list_find_last_data_or_tail(LINK *head, DATA data) {
+LINK linked_list_find_last_data(LINK head, DATA data) {
 	LINK ptr, ret = NULL;
-	for(ptr=(*head);(ptr = linked_list_find_first_data(ptr, data)) != NULL; ptr = ptr->next) {
+	for(ptr=head;(ptr = linked_list_find_first_data(ptr, data)) != NULL; ptr = ptr->next) {
 		ret = ptr;
 	}
 	return ret;
@@ -143,8 +143,13 @@ void prvt_linked_list_data_shifter(LINK element) {
  */
 
 void InsertAfterToList(LINK *head, DATA after, DATA to_insert) {
-	LINK element_before = linked_list_find_last_data_or_tail(head, after);
-	linked_list_insert_list(&element_before, linked_list_create_with_data(to_insert));
+	LINK element_before = linked_list_find_last_data(*head, after);
+	if (element_before) {
+		linked_list_insert_list(&element_before, linked_list_create_with_data(to_insert));
+	} else {
+		AppendToList(head, to_insert);
+	}
+	
 }
 
 void AppendToList(LINK *head, DATA data) {
