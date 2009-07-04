@@ -3,6 +3,8 @@
 
 typedef double elem;
 
+#define MEMORY_ALLOCATION_FAILURE_AT(func) fprintf(stderr, "MEMORY ALLOCATION FAILURE AT '%s'. Aborting\n", func); 
+
 typedef struct
 {
   int     n;    /* size                  */

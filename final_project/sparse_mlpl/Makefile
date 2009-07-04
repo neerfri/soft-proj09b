@@ -1,0 +1,17 @@
+CFLAGS  =  -Wall -g -ansi -pedantic-errors
+CC = gcc
+PROJ_NAME = sparse_matrix
+
+all: $(PROJ_NAME)
+
+clean:
+	rm -f $(PROJ_NAME).o $(PROJ_NAME)
+
+$(PROJ_NAME): $(PROJ_NAME).o
+	$(CC) $(CFLAGS) $(PROJ_NAME).o -o $(PROJ_NAME)
+
+$(PROJ_NAME).o:
+	$(CC) $(CFLAGS) -c $(PROJ_NAME).c -o $(PROJ_NAME).o
+
+%.o:%.c
+	$(CC) $(CFLAGS) -c $*.c -o $*.o
