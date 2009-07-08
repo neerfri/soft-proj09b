@@ -1,9 +1,3 @@
-/*
-sparse_matrix_arr* allocate_sparse_matrix_arr(int n, int numNnz);
-void free_sparse_matrix_arr(sparse_matrix_arr* matrix);
-void  mult_sparse_arr(const sparse_matrix_arr *A, const elem* v, elem* result);
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -30,7 +24,7 @@ sparse_matrix_arr* allocate_sparse_matrix_arr(int n, int numNnz) {
 		free(matrix);
 		return(NULL);
 	}
-	matrix->rowptr = (int *)malloc((numNnz+1)*sizeof(int));
+	matrix->rowptr = (int *)malloc((n+1)*sizeof(int));
 	if (matrix->rowptr == NULL) {
 		MEMORY_ALLOCATION_FAILURE_AT("allocate_sparse_matrix_arr: matrix->rowptr");
 		free(matrix->colind);
@@ -41,20 +35,64 @@ sparse_matrix_arr* allocate_sparse_matrix_arr(int n, int numNnz) {
 	return matrix;
 }
 
-int read_values(sparse_matrix_arr *matrix) {
-	
-	return 0;
+void free_sparse_matrix_arr(sparse_matrix_arr* matrix) {
+	free(matrix->colind);
+	free(matrix->rowptr);
+	free(matrix->values);
+	free(matrix);
 }
 
-sparse_matrix_arr *read_matrix() {
+void  mult_sparse_arr(const sparse_matrix_arr *A, const elem* v, elem* result) {
+	int j, val_index;
+	val_index = 0;
+	for(j=0; j < A->n; j++) {
+		result[j] = 0;
+		for(; val_index<A->rowptr[j+1]; val_index++) {
+			result[j] = result[j] + (A->values[val_index]*v[A->colind[val_index]]);
+		}
+	}
+}
+
+elem *allocate_vector(int n) {
+	int i;
+	elem *vector;
+	if ((vector = malloc(n*sizeof(elem))) == NULL) {
+		MEMORY_ALLOCATION_FAILURE_AT("allocate_vector: vector");
+		return NULL;
+	}
+	for(i=0; i< n; i++) {
+		vector[i] = 0;
+	}
+	return vector;
+}
+
+elem *allocate_and_read_vector(int n) {
+	int i;
+	double scanf_receptor;
+	elem *vector;
+	if ((vector = allocate_vector(n)) == NULL) {
+		return NULL;
+	}
+	for(i=0; i<n; i++) {
+		if (scanf("%lf", &scanf_receptor) < 1) {
+			fprintf(stderr, "Error reading vector value in pos: %d", i);
+			free(vector);
+			return NULL;
+		}
+		vector[i] = scanf_receptor;
+	}
+	return vector;
+}
+
+sparse_matrix_arr *allocate_and_read_matrix(FILE *fp) {
 	int n=0, numNnz=0;
 	int i, j, val_index, pos;
 	double scanf_receptor;
 	elem *values;
 	sparse_matrix_arr* matrix;
-	if (scanf("%d", &n) < 1) {
+	if (fscanf(fp, "%d", &n) < 1) {
 		fprintf(stderr, "Error reading matrix size");
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 #ifdef DEBUG
 	printf("matrix size: %d\n", n);
@@ -67,9 +105,9 @@ sparse_matrix_arr *read_matrix() {
 	for(j=0; j<n; j++) {
 		for(i=0; i<n; i++) {
 			pos = i + (j*n);
-			if (scanf("%lf", &scanf_receptor) < 1) {
+			if (fscanf(fp, "%lf", &scanf_receptor) < 1) {
 				fprintf(stderr, "Error reading matrix values at pos: %d\n", pos);
-				/*TODO:free memory */
+				free(values);
 				return NULL;
 			}
 			values[pos] = scanf_receptor;
@@ -77,58 +115,25 @@ sparse_matrix_arr *read_matrix() {
 				numNnz++;
 		}
 	}
-	/*
-	for(i=0; i<n; i++) {
-		for(j=0; j<n; j++) {
-			printf("%f ", (float)(values[i + (j*n)]));
-		}
-		printf("\n");
-	}*/
 		
 	if ((matrix = allocate_sparse_matrix_arr(n, numNnz)) == NULL)
 		return NULL;
 	val_index = 0;
 	matrix->rowptr[0] = 0;
 	for(j=0; j<n; j++) {
-		matrix->rowptr[j] = val_index;
 		for(i=0; i<n; i++) {
 			pos = i + (j*n);
-			if (values[i + (j*n)] != 0) {
-				matrix->values[val_index] = *(values+(i + (j*n)));
+			if (values[pos] != 0) {
+				matrix->values[val_index] = values[pos];
 				matrix->colind[val_index] = i;
 #ifdef DEBUG
-				printf("Found new non-0 val: %d, colind: %d, val_index:%d\n", (int)(*(values+(i + (j*n)))), matrix->colind[val_index], val_index);
+				printf("Found new non-0 val: %lf, colind: %d, val_index:%d\n", values[pos], matrix->colind[val_index], val_index);
 #endif
 				val_index++;
 			}
 		}
+		matrix->rowptr[j+1] = val_index;
 	}
-	matrix->rowptr[j] = val_index;
+	free(values);
 	return matrix;
-}
-
-void print_sparse_matrix_data(sparse_matrix_arr *matrix) {
-	int i;
-	for(i=0; matrix->rowptr[i] < matrix->n;i++) {
-		printf("%f ", matrix->values[i]);
-	}
-	printf("\n");
-	for(i=0; matrix->rowptr[i] < matrix->n;i++) {
-		printf("%d ", matrix->colind[i]);
-	}
-	printf("\n");
-	for(i=0; matrix->rowptr[i] < matrix->n;i++) {
-		printf("%d ", matrix->rowptr[i]);
-	}
-	printf("%d", matrix->rowptr[i++]);
-	printf("\n");
-}
-
-int main(void) {
-	sparse_matrix_arr* matrix = read_matrix();
-	if (matrix == NULL) {
-		exit(EXIT_FAILURE);
-	}
-	print_sparse_matrix_data(matrix);
-	return EXIT_SUCCESS;
 }
