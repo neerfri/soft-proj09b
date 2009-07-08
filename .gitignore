@@ -13,3 +13,10 @@ assign1/is_dividable/is_dividable.o
 assign2/string_editor/string_editor
 assign2/string_editor/string_editor.o
 assign2/string_editor/my_list.o
+
+final_project/sparse_mlpl/sparse_matrix
+final_project/sparse_mlpl/sparse_matrix.o
+final_project/sparse_mlpl/main.o
+
+final_project/modularity_mat/modularity_mat
+final_project/modularity_mat/modularity_mat.o
