@@ -21,4 +21,8 @@ final_project/sparse_mlpl/main.o
 final_project/modularity_mat/modularity_mat
 final_project/modularity_mat/modularity_mat.o
 
+final_project/eigen_pair/eigen_pair.o
+final_project/eigen_pair/eigen_pair
+
 final_project/shared/shared.o
+
