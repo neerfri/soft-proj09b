@@ -10,7 +10,6 @@
 #include "shared.h"
 
 int main(int argc, char **argv) {
-	FILE *fp;
 	sparse_matrix_arr* adj_matrix;
 	int_vector *vgroup;
 	square_matrix *modularity_matrix;
@@ -19,29 +18,15 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "Usage: %s <adjacency-mat-file> <group-file>\n", argv[0]);
 		return EXIT_FAILURE;
 	}
-	if ((fp = fopen(argv[1], "r")) == NULL) {
-		/*File open error ! abort */
-		fprintf(stderr, "Could not open adjacency matrix file: '%s'. Aborting.\n", argv[1]);
+	if ((adj_matrix = read_adjacency_matrix(argv[1])) == NULL) {
+		/*Problem reading adjacency matrix data */
 		return EXIT_FAILURE;
 	}
-	if ((adj_matrix = allocate_and_read_matrix(fp)) == NULL) {
-		fclose(fp);
-		exit(EXIT_FAILURE);
-	}
-	fclose(fp);
-	if ((fp = fopen(argv[2], "r")) == NULL) {
-		/*File open error ! abort */
-		fprintf(stderr, "Could not open vertices file: '%s'. Aborting.\n", argv[2]);
+	if ((vgroup = read_vertices_group_file(argv[2], adj_matrix->n)) == NULL) {
+		/*Problem reading adjacency matrix data */
 		free(adj_matrix);
 		return EXIT_FAILURE;
 	}
-	if ((vgroup = malloc(sizeof(int_vector))) == NULL) {
-		MEMORY_ALLOCATION_FAILURE_AT("main: vgroup");
-		free(adj_matrix);
-		return EXIT_FAILURE;
-	}
-	read_n_vertices_group(fp, vgroup, adj_matrix->n);
-	fclose(fp);
 	modularity_matrix = calculate_modularity_matrix(adj_matrix, vgroup);
 	print_square_matrix(modularity_matrix);
 	return EXIT_SUCCESS;
