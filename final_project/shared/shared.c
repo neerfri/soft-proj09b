@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <math.h>
 #include "shared.h"
 
 void print_elem_vector(elem *vector, int n) {
@@ -261,19 +262,129 @@ elem_vector *mat_vec_multiply(square_matrix *mat, elem_vector *vec) {
 	return result;
 }
 
+elem vec_vec_multiply(elem_vector *vec1, elem_vector *vec2) {
+	elem result = 0;
+	int i;
+	for(i=0; i<vec1->n; i++) {
+		result = result + (vec1->values[i]*vec2->values[i]);
+	}
+	return result;
+}
+
+elem_vector *vec_substraction(elem_vector *vec1, elem_vector *vec2) {
+	elem_vector *result;
+	int i;
+	if ((result = allocate_elem_vector(vec1->n)) == NULL) {
+		/* Error allocating  */
+		/*TODO: handle error*/
+		return NULL;
+	}
+	for(i=0; i<vec1->n; i++) {
+		result->values[i] = vec1->values[i] - vec2->values[i];
+	}
+	return result;
+}
+
+elem vec_norm(elem_vector *vec) {
+	return (elem)sqrt(vec_vec_multiply(vec, vec));
+}
+
+elem_vector *elem_vec_multiply(elem scalar, elem_vector *vec) {
+	elem_vector *result;
+	int i;
+	if ((result = allocate_elem_vector(vec->n)) == NULL) {
+		/* Error allocating  */
+		/*TODO: handle error*/
+		return NULL;
+	}
+	for(i=0; i<vec->n; i++) {
+		result->values[i] = scalar * vec->values[i];
+	}
+	return result;
+}
+
+void vec_normalize(elem_vector *vec) {
+	elem factor;
+	int i;
+	factor = vec_norm(vec);
+	for(i=0; i<vec->n; i++) {
+		vec->values[i] = vec->values[i]/factor;
+	}
+}
+
 eigen_pair *calculate_leading_eigen_pair(square_matrix *mod_mat) {
 	elem_vector *X, *X_next; /* represent X[0], x[1]... from the algorithm */
 	int i;
+	eigen_pair *result;
+	elem eigen_value, convergence_meter;
 	if ((X = allocate_elem_vector(mod_mat->n)) == NULL) {
 		/* Error allocating  */
 		/*TODO: handle error*/
 		return NULL;
 	}
-	X->values[0] = 1;
-	for (i=1; i<X->n; i++) {
-		X->values[i] = 0;
+	if ((X_next = allocate_elem_vector(mod_mat->n)) == NULL) {
+		/* Error allocating  */
+		/*TODO: handle error*/
+		return NULL;
 	}
-	X_next = mat_vec_multiply(mod_mat, X);
-	print_elem_vector(X_next->values, X_next->n);
-	return NULL;
+	X_next->values[0] = 1;
+	for (i=1; i<X_next->n; i++) {
+		X_next->values[i] = 0;
+	}
+	do {
+		free_elem_vector(X);
+		vec_normalize(X_next);
+		X = X_next;
+		X_next = mat_vec_multiply(mod_mat, X);
+		eigen_value = vec_vec_multiply(X_next, X)/vec_vec_multiply(X,X);
+		/* Check convergence as described in eq. 19 */
+		convergence_meter = vec_norm(vec_substraction(mat_vec_multiply(mod_mat, X_next),
+				elem_vec_multiply(eigen_value, X_next)))/vec_norm(X_next);
+	} while(convergence_meter > 0.001);
+	/* TODO: use convergence parameter from argv */
+	vec_normalize(X_next);
+	if ((result = malloc(sizeof(eigen_pair))) == NULL) {
+		/* Error allocating  */
+		/*TODO: handle error*/
+		return NULL;
+	}
+	result->value = eigen_value;
+	result->vector = X_next;
+	free_elem_vector(X);
+	return result;
+}
+
+
+eigen_pair *shift_and_calculate_leading_eigen_pair(square_matrix *mod_mat) {
+	eigen_pair *result;
+	square_matrix *shifted_mod_mat;
+	elem A_1_norm=0, A_1_norm_summer;
+	int pos;
+	int i, j;
+	if ((shifted_mod_mat = allocate_square_matrix(mod_mat->n)) == NULL) {
+		MEMORY_ALLOCATION_FAILURE_AT("shift_and_calculate_leading_eigen_pair: shifted_mod_mat");
+		return NULL;
+	}
+	for(j=0; j<mod_mat->n; j++) {
+		for(i=0; i<mod_mat->n; i++) {
+			pos = (i*mod_mat->n) + j;
+			A_1_norm_summer = A_1_norm_summer + fabs(mod_mat->values[pos]);
+		}
+		if (A_1_norm < A_1_norm_summer) {
+			A_1_norm = A_1_norm_summer;
+		}
+	}
+	for(i=0; i<mod_mat->n; i++) {
+		for(j=0; j<mod_mat->n; j++) {
+			pos = (i*mod_mat->n) + j;
+			if(i==j) {
+				shifted_mod_mat->values[pos] = mod_mat->values[pos] + A_1_norm;
+			} else {
+				shifted_mod_mat->values[pos] = mod_mat->values[pos];
+			}
+		}
+	}
+	result = calculate_leading_eigen_pair(shifted_mod_mat);
+	free_square_matrix(shifted_mod_mat);
+	return result;
 }

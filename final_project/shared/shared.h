@@ -26,14 +26,13 @@ typedef struct {
 /* Holds a vector of element of type elem
  */
 typedef struct {
-	int n;			/* size */
+	int n;			/* vector's length */
 	elem *values;
 } elem_vector;
 
 typedef struct {
-	int n; /* eigen vector's length */
 	elem value; /* the eigen value */
-	elem *vector; /* the eigen vector */
+	elem_vector *vector; /* the eigen vector */
 } eigen_pair;
 
 /************************************************/
