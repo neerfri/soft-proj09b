@@ -253,7 +253,7 @@ elem_vector *mat_vec_multiply(square_matrix *mat, elem_vector *vec) {
 		return NULL;
 	}
 	for(i=0; i<mat->n; i++) {
-		vec->values[i] = 0;
+		result->values[i] = 0;
 		for(j=0; j<mat->n; j++) {
 			result->values[i] = result->values[i] + (mat->values[(i*mat->n) + j]*vec->values[j]);
 		}
