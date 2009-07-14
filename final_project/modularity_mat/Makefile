@@ -1,4 +1,4 @@
-CFLAGS  =  -Wall -g -ansi -pedantic-errors -I../sparse_mlpl -L../sparse_mlpl -I../shared -L../shared
+CFLAGS  =  -Wall -g -ansi -pedantic-errors -I../sparse_mlpl -L../sparse_mlpl -I../shared -L../shared -lm
 CC = gcc
 PROJ_NAME = modularity_mat
 

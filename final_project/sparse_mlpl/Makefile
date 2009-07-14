@@ -1,4 +1,4 @@
-CFLAGS  =  -Wall -g -ansi -pedantic-errors -I. -I./../shared
+CFLAGS  =  -Wall -g -ansi -pedantic-errors -I. -I./../shared -lm
 CC = gcc
 PROJ_NAME = sparse_matrix
 
