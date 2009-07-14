@@ -24,10 +24,17 @@ int main(int argc, char **argv) {
 	}
 	if ((vgroup = read_vertices_group_file(argv[2], adj_matrix->n)) == NULL) {
 		/*Problem reading adjacency matrix data */
-		free(adj_matrix);
+		free_sparse_matrix_arr(adj_matrix);
 		return EXIT_FAILURE;
 	}
-	modularity_matrix = calculate_modularity_matrix(adj_matrix, vgroup);
+	if ((modularity_matrix = calculate_modularity_matrix(adj_matrix, vgroup)) == NULL) {
+		/* Failed calculating modularity matrix */
+		free_sparse_matrix_arr(adj_matrix);
+		free_int_vector(vgroup);
+		return EXIT_FAILURE;
+	}
 	print_square_matrix(modularity_matrix);
+	free_sparse_matrix_arr(adj_matrix);
+	free_int_vector(vgroup);
 	return EXIT_SUCCESS;
 }

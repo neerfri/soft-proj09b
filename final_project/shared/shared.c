@@ -49,6 +49,16 @@ void print_sparse_matrix(sparse_matrix_arr *matrix) {
 	}
 }
 
+void free_int_vector(int_vector *vector) {
+	free(vector->vertices);
+	free(vector);
+}
+
+void free_square_matrix(square_matrix *matrix) {
+	free(matrix->values);
+	free(matrix);
+}
+
 sparse_matrix_arr *read_adjacency_matrix(const char* file) {
 	FILE *fp;
 	sparse_matrix_arr *adj_matrix;
@@ -211,4 +221,59 @@ square_matrix *calculate_modularity_matrix(sparse_matrix_arr *adj_matrix, int_ve
 	}
 	free(F_g);
 	return mod_mat;
+}
+
+elem_vector *allocate_elem_vector(int length) {
+	elem_vector *vector;
+	if((vector = malloc(sizeof(elem_vector))) == NULL) {
+		/* Error allocating  */
+		/*TODO: handle error*/
+		return NULL;
+	}
+	vector->n = length;
+	if ((vector->values = calloc(length, sizeof(elem))) == NULL) {
+		/* Error allocating  */
+		/*TODO: handle error*/
+		return NULL;
+	}
+	return vector;
+}
+
+void free_elem_vector(elem_vector *vector) {
+	free(vector->values);
+	free(vector);
+}
+
+elem_vector *mat_vec_multiply(square_matrix *mat, elem_vector *vec) {
+	int i, j;
+	elem_vector *result;
+	if ((result = allocate_elem_vector(vec->n)) == NULL) {
+		/* Error allocating  */
+		/*TODO: handle error*/
+		return NULL;
+	}
+	for(i=0; i<mat->n; i++) {
+		vec->values[i] = 0;
+		for(j=0; j<mat->n; j++) {
+			result->values[i] = result->values[i] + (mat->values[(i*mat->n) + j]*vec->values[j]);
+		}
+	}
+	return result;
+}
+
+eigen_pair *calculate_leading_eigen_pair(square_matrix *mod_mat) {
+	elem_vector *X, *X_next; /* represent X[0], x[1]... from the algorithm */
+	int i;
+	if ((X = allocate_elem_vector(mod_mat->n)) == NULL) {
+		/* Error allocating  */
+		/*TODO: handle error*/
+		return NULL;
+	}
+	X->values[0] = 1;
+	for (i=1; i<X->n; i++) {
+		X->values[i] = 0;
+	}
+	X_next = mat_vec_multiply(mod_mat, X);
+	print_elem_vector(X_next->values, X_next->n);
+	return NULL;
 }

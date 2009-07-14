@@ -23,7 +23,23 @@ typedef struct {
 	elem *values;
 } square_matrix;
 
+/* Holds a vector of element of type elem
+ */
+typedef struct {
+	int n;			/* size */
+	elem *values;
+} elem_vector;
+
+typedef struct {
+	int n; /* eigen vector's length */
+	elem value; /* the eigen value */
+	elem *vector; /* the eigen vector */
+} eigen_pair;
+
 /************************************************/
+
+void free_int_vector(int_vector *vector);
+void free_square_matrix(square_matrix *matrix);
 
 void print_elem_vector(elem *vector, int n);
 void print_int_vector(int *vector, int n);
@@ -37,5 +53,8 @@ int degree_of_vertice(int i, sparse_matrix_arr *matrix);
 square_matrix *allocate_square_matrix(int n);
 void print_square_matrix(square_matrix *mat);
 square_matrix *calculate_modularity_matrix(sparse_matrix_arr *adj_matrix, int_vector *vgroup);
+
+
+eigen_pair *calculate_leading_eigen_pair(square_matrix *mod_mat);
 
 #endif /* __FINAL_PROJECT_SHARED_H */
