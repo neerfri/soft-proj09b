@@ -24,5 +24,8 @@ final_project/modularity_mat/modularity_mat.o
 final_project/eigen_pair/eigen_pair.o
 final_project/eigen_pair/eigen_pair
 
+final_project/spectral_div/spectral_div
+final_project/spectral_div/spectral_div.o
+
 final_project/shared/shared.o
 

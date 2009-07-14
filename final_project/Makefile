@@ -5,7 +5,7 @@
 #         Author: Neer Friedman
 ########################################################
 
-SUBDIRS = "shared" "modularity_mat" "sparse_mlpl" "eigen_pair"
+SUBDIRS = "shared" "modularity_mat" "sparse_mlpl" "eigen_pair" "spectral_div"
 
 # Default Target
 all:
