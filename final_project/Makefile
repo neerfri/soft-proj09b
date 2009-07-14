@@ -5,14 +5,14 @@
 #         Author: Neer Friedman
 ########################################################
 
-SUBDIRS = "shared" "modularity_mat" "sparse_mlpl"
+SUBDIRS = "shared" "modularity_mat" "sparse_mlpl" "eigen_pair"
 
 # Default Target
 all:
 	@echo 
-	@echo "#######################################"
-	@echo "### BUILDING ALL TARGETS ###"
-	@echo "#######################################"
+	@echo "########################################"
+	@echo "### BUILDING ALL TARGETS FOR FINAL PROJ#"
+	@echo "########################################"
 	@echo 
 	
 	for i in $(SUBDIRS) ; do ( cd $$i ; make ) ; done
@@ -20,7 +20,7 @@ all:
 clean:
 	@echo 
 	@echo "#######################################"
-	@echo "### CLEANING ALL TARGETS ###"
+	@echo "### CLEANING ALL FOR FINAL PROJ     ###"
 	@echo "#######################################"
 	@echo 
 	
