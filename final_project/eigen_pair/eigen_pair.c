@@ -35,5 +35,8 @@ int main(int argc, char **argv) {
 		free_square_matrix(modularity_matrix);
 		return EXIT_FAILURE;
 	}
+	printf("%f\n", leading_eigen_pair->value);
+	print_elem_vector(leading_eigen_pair->vector->values, leading_eigen_pair->vector->n);
+	printf("\n");
 	return EXIT_SUCCESS;
 }
