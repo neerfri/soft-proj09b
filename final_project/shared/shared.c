@@ -480,3 +480,95 @@ two_division *divide_network_in_two(square_matrix *mod_mat, eigen_pair *leading_
 	}
 	return NULL;
 }
+
+int improve_network_division(square_matrix *mod_mat, two_division *division) {
+	int *unmoved, *indices;
+	int i,k,j;
+	elem Q_0, delta_Q;
+	elem *score, *improve;
+	elem_vector *s;
+	if ((s = allocate_elem_vector(mod_mat->n)) == NULL) {
+		return -1;
+	}
+	if ((score = calloc(mod_mat->n, sizeof(elem))) == NULL) {
+		MEMORY_ALLOCATION_FAILURE_AT("improve_network_division: score");
+		free_elem_vector(s);
+		return -1;
+	}
+	if ((improve = calloc(mod_mat->n, sizeof(elem))) == NULL) {
+		MEMORY_ALLOCATION_FAILURE_AT("improve_network_division: score");
+		free_elem_vector(s);
+		free(score);
+		return -1;
+	}
+	/* initialize S Vector*/
+	for(i=0; i<mod_mat->n; i++) {
+		s->values[i] = division->division->vertices[i];
+	}
+	if ((unmoved = calloc(mod_mat->n, sizeof(int))) == NULL) {
+		MEMORY_ALLOCATION_FAILURE_AT("improve_network_division: unmoved");
+		free_elem_vector(s);
+		free(score);
+		free(improve);
+		return 1;
+	}
+	if ((indices = calloc(mod_mat->n, sizeof(int))) == NULL) {
+		MEMORY_ALLOCATION_FAILURE_AT("improve_network_division: indices");
+		free_elem_vector(s);
+		free(score);
+		free(improve);
+		free(unmoved);
+		return 1;
+	}
+	do {
+		for(i=0; i<mod_mat->n; i++) {
+				unmoved[i] = 1; /*this marks all vertices as unmoved */
+		}
+		for(i=0; i<mod_mat->n; i++) {
+			Q_0 = 0.5 * calculate_improvement_in_modularity(mod_mat, s);
+			for(k=0; k<mod_mat->n; k++) {
+				if(unmoved[k] == 1) {
+					s->values[k] = -1 * s->values[k];
+					score[k] = (0.5 * calculate_improvement_in_modularity(mod_mat, s)) - Q_0;
+					s->values[k] = -1 * s->values[k];
+				}
+			}
+			/* find vertex j with a maximal score */
+			j=0;
+			for(k=0; k<mod_mat->n; k++) {
+				if (unmoved[k] == 1) {
+					if (unmoved[j] == 0) {
+						j = k; /*The initial chosen j was illegal, fix it. this can only happen once*/
+					} else if(score[j] < score[k]){
+						j = k;
+					}
+				}
+			}
+			/* change vertex j's group */
+			s->values[j] = -1 * s->values[j];
+			indices[i] = j;
+			if (i==0) {
+				improve[i] = score[j];
+			} else {
+				improve[i] = improve[i-1] + score[j];
+			}
+			unmoved[j] = 0;
+		}
+		/* find the maximum improvement of s and update s accordingly */
+		i = 0;
+		for(k=1; k<mod_mat->n; k++) {
+			if (improve[i] < improve[k])
+				i = k;
+		}
+		for(k=mod_mat->n-1; k>i+1; k--) {
+			j = indices[k];
+			s->values[j] = -1 * s->values[j];
+		}
+		if(i == mod_mat->n-1) {
+			delta_Q = 0;
+		} else {
+			delta_Q = improve[i];
+		}
+		printf("%f\n", delta_Q);
+	} while (IS_POSITIVE(delta_Q));
+}
