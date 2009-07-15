@@ -4,14 +4,14 @@
 #include "sparse_matrix.h"
 
 #define MEMORY_ALLOCATION_FAILURE_AT(func) fprintf(stderr, "MEMORY ALLOCATION FAILURE AT '%s'. Aborting\n", func);
-
+#define IS_POSITIVE(X) ((X) > 0.00001)
 /* Type definitions */
 
 /* Integer array with stored length
  * This structure is used for holding vertices groups.
  **/
 typedef struct {
-  int     count;    /* size                  */
+  int     n;    /* size                  */
   int*    vertices;
 } int_vector;
 
@@ -35,10 +35,17 @@ typedef struct {
 	elem_vector *vector; /* the eigen vector */
 } eigen_pair;
 
+typedef struct {
+	elem quality;
+	int_vector *division;
+} two_division;
+
 /************************************************/
 
+int_vector *allocate_int_vector(int n);
 void free_int_vector(int_vector *vector);
 void free_square_matrix(square_matrix *matrix);
+void free_eigen_pair(eigen_pair *pair);
 
 void print_elem_vector(elem *vector, int n);
 void print_int_vector(int *vector, int n);
@@ -55,5 +62,7 @@ square_matrix *calculate_modularity_matrix(sparse_matrix_arr *adj_matrix, int_ve
 
 
 eigen_pair *calculate_leading_eigen_pair(square_matrix *mod_mat);
+
+two_division *divide_network_in_two(square_matrix *mod_mat, eigen_pair *leading_eigen_pair);
 
 #endif /* __FINAL_PROJECT_SHARED_H */

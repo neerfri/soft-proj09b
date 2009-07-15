@@ -8,6 +8,8 @@ int main(int argc, char **argv) {
 	int_vector *vgroup;
 	square_matrix *modularity_matrix;
 	eigen_pair *leading_eigen_pair;
+	two_division *division;
+	int i;
 	if (argc < 4) {
 		fprintf(stderr, "Invalid Arguments, Aborting.\n");
 		fprintf(stderr, "Usage: %s <adjacency-mat-file> <group-file> <precision>\n", argv[0]);
@@ -35,8 +37,30 @@ int main(int argc, char **argv) {
 		free_square_matrix(modularity_matrix);
 		return EXIT_FAILURE;
 	}
+	if ((division = divide_network_in_two(modularity_matrix, leading_eigen_pair)) == NULL) {
+		/* Failed calculating partition */
+		free_sparse_matrix_arr(adj_matrix);
+		free_int_vector(vgroup);
+		free_square_matrix(modularity_matrix);
+		free_eigen_pair(leading_eigen_pair);
+		return EXIT_FAILURE;
+	}
+	printf("%f\n", division->quality);
+	for(i=0; i<division->division->n; i++) {
+		if (division->division->vertices[i] == division->division->vertices[0]) {
+			printf("%d ", i);
+		}
+	}
+	printf("\n");
+	for(i=0; i<division->division->n; i++) {
+		if (division->division->vertices[i] != division->division->vertices[0]) {
+			printf("%d ", vgroup->vertices[i]);
+		}
+	}
+	/*
 	printf("%f\n", leading_eigen_pair->value);
 	print_elem_vector(leading_eigen_pair->vector->values, leading_eigen_pair->vector->n);
+	*/
 	printf("\n");
 	return EXIT_SUCCESS;
 }

@@ -50,6 +50,20 @@ void print_sparse_matrix(sparse_matrix_arr *matrix) {
 	}
 }
 
+int_vector *allocate_int_vector(int n) {
+	int_vector *result;
+	if ((result = malloc(sizeof(int_vector))) == NULL) {
+		MEMORY_ALLOCATION_FAILURE_AT("allocate_int_vector: result");
+		return NULL;
+	}
+	result->n = n;
+	if ((result->vertices = calloc(n, sizeof(int))) == NULL) {
+		MEMORY_ALLOCATION_FAILURE_AT("allocate_int_vector: result->vertices");
+		return NULL;
+	}
+	return result;
+}
+
 void free_int_vector(int_vector *vector) {
 	free(vector->vertices);
 	free(vector);
@@ -112,17 +126,17 @@ int read_n_vertices_group(FILE *fp, int_vector *vertices, int n) {
 			values[i] = scanf_receptor;
 		}
 	}
-	vertices->count = i;
-	if ((vertices->vertices = calloc(vertices->count, sizeof(int))) == NULL) {
+	vertices->n = i;
+	if ((vertices->vertices = calloc(vertices->n, sizeof(int))) == NULL) {
 		MEMORY_ALLOCATION_FAILURE_AT("read_vertices_group: vertices->vertices");
 		free(values);
 		return -1;
 	}
-	for(i=0; i<vertices->count; i++) {
+	for(i=0; i<vertices->n; i++) {
 		vertices->vertices[i] = values[i];
 	}
 	free(values);
-	return vertices->count;
+	return vertices->n;
 }
 
 int degree_of_vertice(int i, sparse_matrix_arr *matrix) {
@@ -166,29 +180,29 @@ square_matrix *calculate_modularity_matrix(sparse_matrix_arr *adj_matrix, int_ve
 	elem A_i_j;
 	elem *F_g;
 	int *K;
-	if ((mod_mat = allocate_square_matrix(vgroup->count)) == NULL) {
+	if ((mod_mat = allocate_square_matrix(vgroup->n)) == NULL) {
 		MEMORY_ALLOCATION_FAILURE_AT("calculate_modularity_matrix: mod_mat");
 		return NULL;
 	}
-	if ((F_g = calloc(vgroup->count, sizeof(elem))) == NULL) {
+	if ((F_g = calloc(vgroup->n, sizeof(elem))) == NULL) {
 		MEMORY_ALLOCATION_FAILURE_AT("calculate_modularity_matrix: F_g");
 		free(mod_mat);
 		return NULL;
 	}
-	if ((K = calloc(vgroup->count, sizeof(int))) == NULL) {
+	if ((K = calloc(vgroup->n, sizeof(int))) == NULL) {
 		MEMORY_ALLOCATION_FAILURE_AT("calculate_modularity_matrix: K");
 		free(mod_mat);
 		free(F_g);
 		return NULL;
 	}
 	/*Calculate and store degree of vertices*/
-	for(i=0; i<vgroup->count; i++) {
+	for(i=0; i<vgroup->n; i++) {
 		K[i] = degree_of_vertice(vgroup->vertices[i], adj_matrix);
 	}
-	for(i=0; i<vgroup->count; i++) {
+	for(i=0; i<vgroup->n; i++) {
 		F_g[i] = 0;
 		mat_val_index = adj_matrix->rowptr[vgroup->vertices[i]];
-		for(j=0; j<vgroup->count; j++) {
+		for(j=0; j<vgroup->n; j++) {
 			if (mat_val_index < adj_matrix->rowptr[vgroup->vertices[i]+1]) {
 				/* we are still in values for column j row i; */
 				/* first we need to advance the sparse matrix pointer */
@@ -216,7 +230,7 @@ square_matrix *calculate_modularity_matrix(sparse_matrix_arr *adj_matrix, int_ve
 			F_g[i] = F_g[i] +  mod_mat->values[pos];
 		}
 	}
-	for(i=0; i<vgroup->count; i++) {
+	for(i=0; i<vgroup->n; i++) {
 		pos = (i*mod_mat->n) + i;
 		mod_mat->values[pos] = mod_mat->values[pos] - F_g[i];
 	}
@@ -387,4 +401,82 @@ eigen_pair *shift_and_calculate_leading_eigen_pair(square_matrix *mod_mat) {
 	result = calculate_leading_eigen_pair(shifted_mod_mat);
 	free_square_matrix(shifted_mod_mat);
 	return result;
+}
+
+elem_vector *get_s_vector_for(elem_vector *vector) {
+	elem_vector *s;
+	int i;
+	if ((s = allocate_elem_vector(vector->n)) == NULL) {
+		return NULL;
+	}
+	for(i=0; i<s->n; i++) {
+		if (IS_POSITIVE(vector->values[i])) {
+			s->values[i] = 1;
+		} else {
+			s->values[i] = -1;
+		}
+	}
+	return s;
+}
+
+elem calculate_improvement_in_modularity(square_matrix *mod_mat,elem_vector *s) {
+	elem_vector *product;
+	elem result;
+	if ((product = mat_vec_multiply(mod_mat, s)) == NULL) {
+		return -1;
+	}
+	result = vec_vec_multiply(s, product);
+	free_elem_vector(product);
+	return result;
+}
+
+two_division *allocate_two_division(int n) {
+	two_division *result;
+	if ((result = malloc(sizeof(two_division))) == NULL) {
+		MEMORY_ALLOCATION_FAILURE_AT("allocate_two_division: result");
+		return NULL;
+	}
+	if ((result->division = allocate_int_vector(n)) == NULL) {
+		free(result);
+		return NULL;
+	}
+	return result;
+}
+
+void free_two_division(two_division *division) {
+	free_int_vector(division->division);
+	free(division);
+}
+
+void free_eigen_pair(eigen_pair *pair) {
+	free_elem_vector(pair->vector);
+	free(pair);
+}
+
+two_division *divide_network_in_two(square_matrix *mod_mat, eigen_pair *leading_eigen_pair) {
+	elem_vector *s;
+	two_division *result;
+	int i;
+	if (IS_POSITIVE(leading_eigen_pair->value)) {
+		if ((s = get_s_vector_for(leading_eigen_pair->vector)) == NULL) {
+			return NULL;
+		}
+		if ((result = allocate_two_division(mod_mat->n)) == NULL) {
+			free_elem_vector(s);
+			return NULL;
+		}
+		result->quality = calculate_improvement_in_modularity(mod_mat, s);
+		if (IS_POSITIVE(result->quality)) {
+			/*convert result to int_vector */
+			for(i=0; i<s->n; i++) {
+				result->division->vertices[i] = s->values[i];
+			}
+			free_elem_vector(s);
+			return result;
+		}
+		free_elem_vector(s);
+		free_two_division(result);
+		return NULL;
+	}
+	return NULL;
 }
