@@ -27,5 +27,8 @@ final_project/eigen_pair/eigen_pair
 final_project/spectral_div/spectral_div
 final_project/spectral_div/spectral_div.o
 
+final_project/improve_div/improve_div
+final_project/improve_div/improve_div.o
+
 final_project/shared/shared.o
 
