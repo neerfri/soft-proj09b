@@ -1,23 +1,17 @@
 CFLAGS  =  -Wall -g -ansi -pedantic-errors -I../sparse_mlpl -L../sparse_mlpl -I../shared -L../shared -lm
 CC = gcc
 PROJ_NAME = eigen_pair
+LIB_SOURCES := $(wildcard ./../shared/*.c)
+LIBS = $(foreach LIB_NAME,$(basename $(LIB_SOURCES)), $(LIB_NAME).o)
 
-all: $(PROJ_NAME)
+all: LIBS sparse_matrix.o
+	$(CC) $(CFLAGS) $(PROJ_NAME).c ./../sparse_mlpl/sparse_matrix.o $(LIBS) -o $(PROJ_NAME)
 
 clean:
-	rm -f $(PROJ_NAME).o $(PROJ_NAME)
+	rm -f $(PROJ_NAME)
 
-$(PROJ_NAME): $(PROJ_NAME).o sparse_matrix.o shared.o
-	$(CC) $(CFLAGS) $(PROJ_NAME).o ./../sparse_mlpl/sparse_matrix.o ./../shared/shared.o -o $(PROJ_NAME)
-
-$(PROJ_NAME).o:
-	$(CC) $(CFLAGS) -c $(PROJ_NAME).c -o $(PROJ_NAME).o
-
-sparse_matrix.o:
-	cd ./../sparse_mlpl; make;
+LIBS:
+	cd ./../shared; make
 	
-shared.o:
-	cd ./../shared; make;
-
-%.o:%.c
-	$(CC) $(CFLAGS) -c $*.c -o $*.o
+sparse_matrix.o:
+	cd ./../sparse_mlpl; make sparse_matrix.o

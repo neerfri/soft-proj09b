@@ -33,5 +33,6 @@ square_matrix *calculate_modularity_matrix(sparse_matrix_arr *adj_matrix, int_ve
 eigen_pair *calculate_leading_eigen_pair(square_matrix *mod_mat, double precision);
 
 two_division *divide_network_in_two(square_matrix *mod_mat, eigen_pair *leading_eigen_pair);
+int improve_network_division(square_matrix *mod_mat, two_division *division);
 
 #endif /* __FINAL_PROJECT_SHARED_H */

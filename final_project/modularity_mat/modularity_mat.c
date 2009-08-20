@@ -3,11 +3,7 @@
  * catch when calculate_modularity_matrix returns NULL
  * */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include "sparse_matrix.h"
-#include "shared.h"
+#include "default_includes.h"
 
 int main(int argc, char **argv) {
 	sparse_matrix_arr* adj_matrix;
@@ -18,7 +14,7 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "Usage: %s <adjacency-mat-file> <group-file>\n", argv[0]);
 		return EXIT_FAILURE;
 	}
-	if ((adj_matrix = read_adjacency_matrix(argv[1])) == NULL) {
+	if ((adj_matrix = read_adjacency_matrix_file(argv[1])) == NULL) {
 		/*Problem reading adjacency matrix data */
 		return EXIT_FAILURE;
 	}

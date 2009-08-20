@@ -1,19 +1,22 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include "shared.h"
+#include "default_includes.h"
 
 int main(int argc, char **argv) {
 	sparse_matrix_arr* adj_matrix;
 	int_vector *vgroup;
 	square_matrix *modularity_matrix;
 	eigen_pair *leading_eigen_pair;
+	double precision;
 	if (argc < 4) {
 		fprintf(stderr, "Invalid Arguments, Aborting.\n");
 		fprintf(stderr, "Usage: %s <adjacency-mat-file> <group-file> <precision>\n", argv[0]);
 		return EXIT_FAILURE;
 	}
-	if ((adj_matrix = read_adjacency_matrix(argv[1])) == NULL) {
+	if (sscanf(argv[3], "%lf", &precision) < 1) {
+		fprintf(stderr, "Invalid precision, Aborting.\n");
+		fprintf(stderr, "Usage: %s <adjacency-mat-file> <group-file> <precision>\n", argv[0]);
+		return EXIT_FAILURE;
+	}
+	if ((adj_matrix = read_adjacency_matrix_file(argv[1])) == NULL) {
 		/*Problem reading adjacency matrix data */
 		return EXIT_FAILURE;
 	}
@@ -28,7 +31,7 @@ int main(int argc, char **argv) {
 		free_int_vector(vgroup);
 		return EXIT_FAILURE;
 	}
-	if ((leading_eigen_pair = calculate_leading_eigen_pair(modularity_matrix)) == NULL) {
+	if ((leading_eigen_pair = calculate_leading_eigen_pair(modularity_matrix, precision)) == NULL) {
 		/* Failed calculating leading eigen pair */
 		free_sparse_matrix_arr(adj_matrix);
 		free_int_vector(vgroup);

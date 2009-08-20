@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <math.h>
-#include "shared.h"
+#include "default_includes.h"
 
 void print_elem_vector(elem *vector, int n) {
 	int i;
