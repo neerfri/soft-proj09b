@@ -31,4 +31,5 @@ final_project/improve_div/improve_div
 final_project/improve_div/improve_div.o
 
 final_project/shared/shared.o
-
+final_project/shared/data_structures.o
+final_project/shared/input_reading.o
