@@ -1,24 +1,20 @@
 CFLAGS  =  -Wall -g -ansi -pedantic-errors -I. -I./../shared -lm -L../shared
 CC = gcc
 PROJ_NAME = sparse_matrix
-LIBS = ./../shared/shared.o ./../shared/input_reading.o ./../shared/data_structures.o
+LIB_SOURCES := $(wildcard ./../shared/*.c)
+LIBS = $(foreach LIB_NAME,$(basename $(LIB_SOURCES)), $(LIB_NAME).o)
 
-all: $(PROJ_NAME)
+all: $(PROJ_NAME).o
+	$(CC) $(CFLAGS) main.c $(PROJ_NAME).o $(LIBS) -o $(PROJ_NAME)
 
 clean:
-	rm -f $(PROJ_NAME).o $(PROJ_NAME) main.o
+	rm -f $(PROJ_NAME).o $(PROJ_NAME)
 
-$(PROJ_NAME): $(PROJ_NAME).o main.o shared.o
-	$(CC) $(CFLAGS) $(PROJ_NAME).o main.o $(LIBS) -o $(PROJ_NAME)
-
-$(PROJ_NAME).o:
-	$(CC) $(CFLAGS) -c $(PROJ_NAME).c -o $(PROJ_NAME).o
+#$(PROJ_NAME).o: LIBS 
+#	$(CC) $(CFLAGS) -c $(PROJ_NAME).c -o $(PROJ_NAME).o
 	
-shared.o:
+LIBS:
 	cd ./../shared; make
-
-main.o:
-	$(CC) $(CFLAGS) -c main.c -o main.o
-
-%.o:%.c
+	
+%.o:%.c LIBS
 	$(CC) $(CFLAGS) -c $*.c -o $*.o
