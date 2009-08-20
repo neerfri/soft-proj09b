@@ -24,8 +24,6 @@ void print_elem_vector(elem *vector, int n);
 void print_int_vector(int *vector, int n);
 void print_sparse_matrix(sparse_matrix_arr *matrix);
 
-sparse_matrix_arr *read_adjacency_matrix(const char* file);
-
 int degree_of_vertice(int i, sparse_matrix_arr *matrix);
 square_matrix *allocate_square_matrix(int n);
 void print_square_matrix(square_matrix *mat);
