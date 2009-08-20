@@ -76,8 +76,8 @@ sparse_matrix_arr *allocate_and_read_matrix(FILE *fp) {
 			val_index++;
 		}
 		matrix->rowptr[j+1] = val_index;
-		printf("row %d completed\n", j);
 	}
+	free_matrix_cell_list(head);
 	return matrix;
 }
 
@@ -130,14 +130,14 @@ int read_n_vertices_group(FILE *fp, int_vector *vertices, int n) {
 		} else {
 			if (head == NULL) {
 				/* this is the first value, initialize head pointer*/
-				if ((head = malloc(sizeof(int_list_link))) == NULL) {
+				if ((head = malloc(sizeof(int_list_element))) == NULL) {
 					MEMORY_ALLOCATION_FAILURE_AT("read_vertices_group: head");
 					return -1;
 				}
 				ptr = head;
 			} else {
 				/* this is not the first value, add an element to the list */
-				if ((ptr->next = malloc(sizeof(int_list_link))) == NULL) {
+				if ((ptr->next = malloc(sizeof(int_list_element))) == NULL) {
 					MEMORY_ALLOCATION_FAILURE_AT("read_vertices_group: ptr->next");
 					free_int_list(head);
 					return -1;

@@ -136,7 +136,7 @@ square_matrix *calculate_modularity_matrix(sparse_matrix_arr *adj_matrix, int_ve
 				A_i_j = 0;
 			}
 			pos = (i*mod_mat->n) + j;
-			/* next few lines claculates: B_i_j = A_i_j - (K_i*K_j)/M */
+			/* next few lines calculates: B_i_j = A_i_j - (K_i*K_j)/M */
 			mod_mat->values[pos] = A_i_j - (((elem)(K[i]*K[j]))/adj_matrix->rowptr[adj_matrix->n]);
 			/* next line calculates: F_g[i] = Sum(Over all j in vgroup)[B[g]_i_j]*/
 			F_g[i] = F_g[i] +  mod_mat->values[pos];
@@ -147,6 +147,7 @@ square_matrix *calculate_modularity_matrix(sparse_matrix_arr *adj_matrix, int_ve
 		mod_mat->values[pos] = mod_mat->values[pos] - F_g[i];
 	}
 	free(F_g);
+	free(K);
 	return mod_mat;
 }
 

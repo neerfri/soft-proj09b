@@ -25,17 +25,17 @@ void free_matrix_cell_list(matrix_cell_link head) {
 	while(head!=NULL) {
 		ptr = head;
 		head = head->next;
-		free(head);
+		free(ptr);
 	}
 }
 
 
 void free_int_list(int_list_link head) {
-	int_list_link ptr;
+	int_list_link temp;
 	while(head!=NULL) {
-		ptr = head;
+		temp = head;
 		head = head->next;
-		free(head);
+		free(temp);
 	}
 }
 
