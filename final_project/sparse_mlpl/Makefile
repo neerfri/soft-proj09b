@@ -1,14 +1,15 @@
-CFLAGS  =  -Wall -g -ansi -pedantic-errors -I. -I./../shared -lm
+CFLAGS  =  -Wall -g -ansi -pedantic-errors -I. -I./../shared -lm -L../shared
 CC = gcc
 PROJ_NAME = sparse_matrix
+LIBS = ./../shared/shared.o ./../shared/input_reading.o ./../shared/data_structures.o
 
 all: $(PROJ_NAME)
 
 clean:
 	rm -f $(PROJ_NAME).o $(PROJ_NAME) main.o
 
-$(PROJ_NAME): $(PROJ_NAME).o main.o
-	$(CC) $(CFLAGS) $(PROJ_NAME).o main.o -o $(PROJ_NAME)
+$(PROJ_NAME): $(PROJ_NAME).o main.o shared.o
+	$(CC) $(CFLAGS) $(PROJ_NAME).o main.o $(LIBS) -o $(PROJ_NAME)
 
 $(PROJ_NAME).o:
 	$(CC) $(CFLAGS) -c $(PROJ_NAME).c -o $(PROJ_NAME).o
