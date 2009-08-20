@@ -1,14 +1,14 @@
 CFLAGS  =  -Wall -g -ansi -pedantic-errors -I ./../sparse_mlpl -L ./../sparse_mlpl
 CC = gcc
-PROJ_NAME = shared
+SOURCE_FILES := $(wildcard *.c)
+SOURCE_NAMES := $(basename $(SOURCE_FILES))
+OBJECT_FILES := $(foreach SOURCE_NAME,$(SOURCE_NAMES), $(SOURCE_NAME).o)
 
-all: $(PROJ_NAME).o
+
+all: $(OBJECT_FILES)
 
 clean:
-	rm -f $(PROJ_NAME).o $(PROJ_NAME) main.o
-
-$(PROJ_NAME).o:
-	$(CC) $(CFLAGS) -c $(PROJ_NAME).c -o $(PROJ_NAME).o
+	rm -f $(OBJECT_FILES)
 
 %.o:%.c
 	$(CC) $(CFLAGS) -c $*.c -o $*.o

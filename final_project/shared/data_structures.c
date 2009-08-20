@@ -7,6 +7,19 @@
 
 #include "data_structures.h"
 
+matrix_cell_link new_matrix_cell(elem value, int row, int col) {
+	matrix_cell_element *new_cell;
+	if ((new_cell = malloc(sizeof(matrix_cell_element))) == NULL) {
+		MEMORY_ALLOCATION_FAILURE_AT("new_matrix_cell: new_cell");
+		return NULL;
+	}
+	new_cell->value = value;
+	new_cell->row = row;
+	new_cell->col = col;
+	new_cell->next = NULL;
+	return new_cell;
+}
+
 void free_matrix_cell_list(matrix_cell_link head) {
 	matrix_cell_link ptr;
 	while(head!=NULL) {

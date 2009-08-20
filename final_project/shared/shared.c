@@ -323,29 +323,6 @@ elem calculate_improvement_in_modularity(square_matrix *mod_mat,elem_vector *s) 
 	return result;
 }
 
-two_division *allocate_two_division(int n) {
-	two_division *result;
-	if ((result = malloc(sizeof(two_division))) == NULL) {
-		MEMORY_ALLOCATION_FAILURE_AT("allocate_two_division: result");
-		return NULL;
-	}
-	if ((result->division = allocate_int_vector(n)) == NULL) {
-		free(result);
-		return NULL;
-	}
-	return result;
-}
-
-void free_two_division(two_division *division) {
-	free_int_vector(division->division);
-	free(division);
-}
-
-void free_eigen_pair(eigen_pair *pair) {
-	free_elem_vector(pair->vector);
-	free(pair);
-}
-
 two_division *divide_network_in_two(square_matrix *mod_mat, eigen_pair *leading_eigen_pair) {
 	elem_vector *s;
 	two_division *result;
