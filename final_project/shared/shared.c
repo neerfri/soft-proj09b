@@ -50,93 +50,9 @@ void print_sparse_matrix(sparse_matrix_arr *matrix) {
 	}
 }
 
-int_vector *allocate_int_vector(int n) {
-	int_vector *result;
-	if ((result = malloc(sizeof(int_vector))) == NULL) {
-		MEMORY_ALLOCATION_FAILURE_AT("allocate_int_vector: result");
-		return NULL;
-	}
-	result->n = n;
-	if ((result->vertices = calloc(n, sizeof(int))) == NULL) {
-		MEMORY_ALLOCATION_FAILURE_AT("allocate_int_vector: result->vertices");
-		return NULL;
-	}
-	return result;
-}
-
-void free_int_vector(int_vector *vector) {
-	free(vector->vertices);
-	free(vector);
-}
-
 void free_square_matrix(square_matrix *matrix) {
 	free(matrix->values);
 	free(matrix);
-}
-
-sparse_matrix_arr *read_adjacency_matrix(const char* file) {
-	FILE *fp;
-	sparse_matrix_arr *adj_matrix;
-	if ((fp = fopen(file, "r")) == NULL) {
-		/*File open error ! abort */
-		fprintf(stderr, "Could not open adjacency matrix file: '%s'. Aborting.\n", file);
-		return NULL;
-	}
-	if ((adj_matrix = allocate_and_read_matrix(fp)) == NULL) {
-		MEMORY_ALLOCATION_FAILURE_AT("read_adjacency_matrix: adj_matrix");
-		fclose(fp);
-		return NULL;
-	}
-	fclose(fp);
-	return adj_matrix;
-}
-
-int_vector *read_vertices_group_file(const char* file, int max_count) {
-	FILE *fp;
-	int_vector *vgroup;
-	if ((fp = fopen(file, "r")) == NULL) {
-		/*File open error ! abort */
-		fprintf(stderr, "Could not open vertices file: '%s'. Aborting.\n", file);
-		return NULL;
-	}
-	if ((vgroup = malloc(sizeof(int_vector))) == NULL) {
-		MEMORY_ALLOCATION_FAILURE_AT("read_vertices_group_file: vgroup");
-		fclose(fp);
-		return NULL;
-	}
-	if (read_n_vertices_group(fp, vgroup, max_count) < 1) {
-		/*Error reading values from file or no values found*/
-		free(vgroup);
-		fclose(fp);
-		return NULL;
-	}
-	fclose(fp);
-	return vgroup;
-}
-int read_n_vertices_group(FILE *fp, int_vector *vertices, int n) {
-	int scanf_receptor, i, *values;
-	if ((values = calloc(n, sizeof(int))) == NULL) {
-		MEMORY_ALLOCATION_FAILURE_AT("read_vertices_group: values");
-		return -1;
-	}
-	for(i=0; i < n; i++) {
-		if (feof(fp) || fscanf(fp, "%d", &scanf_receptor) < 1) {
-			break;
-		} else {
-			values[i] = scanf_receptor;
-		}
-	}
-	vertices->n = i;
-	if ((vertices->vertices = calloc(vertices->n, sizeof(int))) == NULL) {
-		MEMORY_ALLOCATION_FAILURE_AT("read_vertices_group: vertices->vertices");
-		free(values);
-		return -1;
-	}
-	for(i=0; i<vertices->n; i++) {
-		vertices->vertices[i] = values[i];
-	}
-	free(values);
-	return vertices->n;
 }
 
 int degree_of_vertice(int i, sparse_matrix_arr *matrix) {
@@ -197,23 +113,23 @@ square_matrix *calculate_modularity_matrix(sparse_matrix_arr *adj_matrix, int_ve
 	}
 	/*Calculate and store degree of vertices*/
 	for(i=0; i<vgroup->n; i++) {
-		K[i] = degree_of_vertice(vgroup->vertices[i], adj_matrix);
+		K[i] = degree_of_vertice(vgroup->values[i], adj_matrix);
 	}
 	for(i=0; i<vgroup->n; i++) {
 		F_g[i] = 0;
-		mat_val_index = adj_matrix->rowptr[vgroup->vertices[i]];
+		mat_val_index = adj_matrix->rowptr[vgroup->values[i]];
 		for(j=0; j<vgroup->n; j++) {
-			if (mat_val_index < adj_matrix->rowptr[vgroup->vertices[i]+1]) {
+			if (mat_val_index < adj_matrix->rowptr[vgroup->values[i]+1]) {
 				/* we are still in values for column j row i; */
 				/* first we need to advance the sparse matrix pointer */
-				while(mat_val_index < adj_matrix->rowptr[vgroup->vertices[i]+1] &&
-						adj_matrix->colind[mat_val_index] < vgroup->vertices[j]) {
+				while(mat_val_index < adj_matrix->rowptr[vgroup->values[i]+1] &&
+						adj_matrix->colind[mat_val_index] < vgroup->values[j]) {
 					mat_val_index++;
 				}
 				/* if its in adj_matrix values, take it, otherwise it's 0*/
 				/* first condition makes sure we don't overflow from the array boundries */
 				if (mat_val_index < adj_matrix->rowptr[adj_matrix->n] &&
-						adj_matrix->colind[mat_val_index] == vgroup->vertices[j]) {
+						adj_matrix->colind[mat_val_index] == vgroup->values[j]) {
 					A_i_j = adj_matrix->values[mat_val_index];
 					mat_val_index++;
 				} else {
@@ -236,27 +152,6 @@ square_matrix *calculate_modularity_matrix(sparse_matrix_arr *adj_matrix, int_ve
 	}
 	free(F_g);
 	return mod_mat;
-}
-
-elem_vector *allocate_elem_vector(int length) {
-	elem_vector *vector;
-	if((vector = malloc(sizeof(elem_vector))) == NULL) {
-		/* Error allocating  */
-		/*TODO: handle error*/
-		return NULL;
-	}
-	vector->n = length;
-	if ((vector->values = calloc(length, sizeof(elem))) == NULL) {
-		/* Error allocating  */
-		/*TODO: handle error*/
-		return NULL;
-	}
-	return vector;
-}
-
-void free_elem_vector(elem_vector *vector) {
-	free(vector->values);
-	free(vector);
 }
 
 elem_vector *mat_vec_multiply(square_matrix *mat, elem_vector *vec) {
@@ -326,7 +221,7 @@ void vec_normalize(elem_vector *vec) {
 	}
 }
 
-eigen_pair *calculate_leading_eigen_pair(square_matrix *mod_mat) {
+eigen_pair *calculate_leading_eigen_pair(square_matrix *mod_mat, double precision) {
 	elem_vector *X, *X_next; /* represent X[0], x[1]... from the algorithm */
 	int i;
 	eigen_pair *result;
@@ -354,22 +249,20 @@ eigen_pair *calculate_leading_eigen_pair(square_matrix *mod_mat) {
 		/* Check convergence as described in eq. 19 */
 		convergence_meter = vec_norm(vec_substraction(mat_vec_multiply(mod_mat, X_next),
 				elem_vec_multiply(eigen_value, X_next)))/vec_norm(X_next);
-	} while(convergence_meter > 0.001);
-	/* TODO: use convergence parameter from argv */
+	} while(convergence_meter > precision);
 	vec_normalize(X_next);
-	if ((result = malloc(sizeof(eigen_pair))) == NULL) {
-		/* Error allocating  */
-		/*TODO: handle error*/
+	if ((result = allocate_eigen_pair(eigen_value, X_next)) == NULL) {
+		/* Error creating eigen pair  */
+		free_elem_vector(X);
+		free_elem_vector(X_next);
 		return NULL;
 	}
-	result->value = eigen_value;
-	result->vector = X_next;
 	free_elem_vector(X);
 	return result;
 }
 
 
-eigen_pair *shift_and_calculate_leading_eigen_pair(square_matrix *mod_mat) {
+eigen_pair *shift_and_calculate_leading_eigen_pair(square_matrix *mod_mat, double precision) {
 	eigen_pair *result;
 	square_matrix *shifted_mod_mat;
 	elem A_1_norm=0, A_1_norm_summer;
@@ -398,7 +291,7 @@ eigen_pair *shift_and_calculate_leading_eigen_pair(square_matrix *mod_mat) {
 			}
 		}
 	}
-	result = calculate_leading_eigen_pair(shifted_mod_mat);
+	result = calculate_leading_eigen_pair(shifted_mod_mat, precision);
 	free_square_matrix(shifted_mod_mat);
 	return result;
 }
@@ -457,6 +350,7 @@ two_division *divide_network_in_two(square_matrix *mod_mat, eigen_pair *leading_
 	elem_vector *s;
 	two_division *result;
 	int i;
+	printf("leading_eigen_pair->value: %f\n", leading_eigen_pair->value);
 	if (IS_POSITIVE(leading_eigen_pair->value)) {
 		if ((s = get_s_vector_for(leading_eigen_pair->vector)) == NULL) {
 			return NULL;
@@ -469,7 +363,7 @@ two_division *divide_network_in_two(square_matrix *mod_mat, eigen_pair *leading_
 		if (IS_POSITIVE(result->quality)) {
 			/*convert result to int_vector */
 			for(i=0; i<s->n; i++) {
-				result->division->vertices[i] = s->values[i];
+				result->division->values[i] = s->values[i];
 			}
 			free_elem_vector(s);
 			return result;
@@ -503,7 +397,7 @@ int improve_network_division(square_matrix *mod_mat, two_division *division) {
 	}
 	/* initialize S Vector*/
 	for(i=0; i<mod_mat->n; i++) {
-		s->values[i] = division->division->vertices[i];
+		s->values[i] = division->division->values[i];
 	}
 	if ((unmoved = calloc(mod_mat->n, sizeof(int))) == NULL) {
 		MEMORY_ALLOCATION_FAILURE_AT("improve_network_division: unmoved");
