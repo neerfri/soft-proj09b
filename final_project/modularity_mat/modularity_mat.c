@@ -8,7 +8,6 @@
 int main(int argc, char **argv) {
 	sparse_matrix_arr* adj_matrix;
 	int_vector *vgroup;
-	square_matrix *modularity_matrix;
 	if (argc < 3) {
 		fprintf(stderr, "Invalid Arguments, Aborting.\n");
 		fprintf(stderr, "Usage: %s <adjacency-mat-file> <group-file>\n", argv[0]);
@@ -23,13 +22,8 @@ int main(int argc, char **argv) {
 		free_sparse_matrix_arr(adj_matrix);
 		return EXIT_FAILURE;
 	}
-	if ((modularity_matrix = calculate_modularity_matrix(adj_matrix, vgroup)) == NULL) {
-		/* Failed calculating modularity matrix */
-		free_sparse_matrix_arr(adj_matrix);
-		free_int_vector(vgroup);
-		return EXIT_FAILURE;
-	}
-	print_square_matrix(modularity_matrix);
+	printf("%d \r\n", vgroup->n);
+	print_modularity_matrix(adj_matrix, vgroup);
 	free_sparse_matrix_arr(adj_matrix);
 	free_int_vector(vgroup);
 	return EXIT_SUCCESS;
