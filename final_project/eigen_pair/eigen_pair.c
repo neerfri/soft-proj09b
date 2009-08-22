@@ -31,21 +31,6 @@ int main(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 	leading_eigen_pair = calculate_leading_eigen_pair(Bijtag, precision);
-#ifdef FALSE_DEFINITION
-	if ((modularity_matrix = calculate_modularity_matrix(adj_matrix, vgroup)) == NULL) {
-		/* Failed calculating modularity matrix */
-		free_sparse_matrix_arr(adj_matrix);
-		free_int_vector(vgroup);
-		return EXIT_FAILURE;
-	}
-	if ((leading_eigen_pair = calculate_leading_eigen_pair(modularity_matrix, precision)) == NULL) {
-		/* Failed calculating leading eigen pair */
-		free_sparse_matrix_arr(adj_matrix);
-		free_int_vector(vgroup);
-		free_square_matrix(modularity_matrix);
-		return EXIT_FAILURE;
-	}
-#endif
 	printf("%f\n", leading_eigen_pair->value);
 	print_elem_vector(leading_eigen_pair->vector->values, leading_eigen_pair->vector->n);
 	printf("\n");
