@@ -29,6 +29,28 @@ void free_matrix_cell_list(matrix_cell_link head) {
 	}
 }
 
+sparse_matrix_arr *create_sparse_matrix_from_list(matrix_cell_link head, int n, int numNnz) {
+	sparse_matrix_arr *matrix;
+	int mat_index, j;
+	matrix_cell_link *temp_cell;
+	if ((matrix = allocate_sparse_matrix_arr(n, numNnz)) == NULL)
+		return NULL;
+	mat_index = 0;
+	matrix->rowptr[0] = 0;
+	temp_cell = head;
+	for(j=0; j<n; j++) {
+		while(temp_cell != NULL && temp_cell->row == j) {
+			matrix->values[mat_index] = temp_cell->value;
+			matrix->colind[mat_index] = temp_cell->col;
+			temp_cell = temp_cell->next;
+			mat_index++;
+		}
+		matrix->rowptr[j+1] = mat_index;
+	}
+	free_matrix_cell_list(head);
+	return matrix;
+}
+
 
 void free_int_list(int_list_link head) {
 	int_list_link temp;
@@ -79,6 +101,69 @@ elem_vector *allocate_elem_vector(int length) {
 void free_elem_vector(elem_vector *vector) {
 	free(vector->values);
 	free(vector);
+}
+
+mod_matrix *allocate_partial_modularity_matrix(sparse_matrix_arr *adj_matrix, int_vector *vertices_group) {
+	mod_matrix *mod_mat;
+	if ((mod_mat = malloc(sizeof(mod_matrix))) == NULL) {
+		MEMORY_ALLOCATION_FAILURE_AT("allocate_partial_modularity_matrix: mod_mat");
+		return NULL;
+	}
+	if ((mod_mat->A_g = get_partial_sparse_matrix(adj_matrix, vertices_group)) == NULL) {
+		free(mod_mat);
+		return NULL;
+	}
+	return NULL;
+}
+
+void free_mod_matrix(mod_matrix *mat);
+
+sparse_matrix_arr *get_partial_sparse_matrix(sparse_matrix_arr *mat, int_vector *group) {
+	int i,j, mat_index;
+	int numNnz=0; /* number of values found for the new matrix */
+	matrix_cell_link head=NULL, tail=NULL, temp_cell=NULL;
+	int_vector *reverse_group; /*this holds a reverse mapping to group->values[i], negative in case non existent*/
+	sparse_matrix_arr *result;
+	if ((reverse_group = allocate_int_vector(mat->n)) == NULL) {
+		return NULL;
+	}
+	/* initialize reverse_vgroup */
+	for(i =0, j=0; i < mat->n; i++) {
+		if(group->values[j] == i) {
+			reverse_group->values[i] = j;
+			j++;
+		} else
+			reverse_group->values[i] = -1;
+	}
+	/*the following loop creates a list of cells needed for the new matrix */
+	for(i=0; i<group->n; i++) {
+		mat_index = mat->rowptr[group->values[i]];
+		while(mat_index < mat->rowptr[group->values[i]+1]) {
+			j = reverse_group->values[mat->colind[mat_index]]; /* the column in terms of new mat*/
+			if(j >= 0) {
+				/* current cell should be in the partial matrix */
+				if ((temp_cell = new_matrix_cell(mat->values[mat_index], j, i)) == NULL) {
+					free_int_vector(reverse_group);
+					free_matrix_cell_list(head);
+					return NULL;
+				}
+				if (tail == NULL) {
+					tail = temp_cell;
+					head = temp_cell;
+				}
+				else {
+					tail->next = temp_cell;
+					tail = tail->next;
+				}
+				numNnz++;
+			}
+			mat_index++;
+		}
+	}
+	result = create_sparse_matrix_from_list(head, group->n, numNnz);
+	free_int_vector(reverse_group);
+	free_matrix_cell_list(head);
+	return result;
 }
 
 eigen_pair *allocate_eigen_pair(elem value, elem_vector *vector) {

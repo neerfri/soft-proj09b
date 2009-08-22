@@ -49,6 +49,7 @@ sparse_matrix_arr *allocate_and_read_matrix(FILE *fp) {
 				if ((temp_cell = new_matrix_cell(scanf_receptor, j, i)) == NULL) {
 					/* Error in adding value to list, need to free memory and abort */
 					/*TODO: free memory */
+					return NULL;
 				}
 				if (tail == NULL) {
 					tail = temp_cell;

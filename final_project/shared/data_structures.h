@@ -29,7 +29,7 @@ typedef matrix_cell_element *matrix_cell_link;
 
 matrix_cell_link new_matrix_cell(elem value, int row, int col);
 void free_matrix_cell_list(matrix_cell_link head);
-
+sparse_matrix_arr *create_sparse_matrix_from_list(matrix_cell_link head, int n, int numNnz);
 
 
 /*
@@ -70,6 +70,19 @@ elem_vector *allocate_elem_vector(int length);
 void free_elem_vector(elem_vector *vector);
 
 
+typedef struct  {
+	/* The partial sparse matrix corresponding to
+	 * the vertices group that mod_matrix represents */
+	sparse_matrix_arr *A_g;
+	elem norm_1;		/* The one-norm of the modularity matrix */
+	elem_vector *K;		/* the degrees of each vertex */
+	elem total_degree;	/* The total degree of it's adjacency matrix (M in docs) */
+	elem_vector *f_g;		/* A vector with the f[g] function for each row */
+} mod_matrix;			/* modularity_matrix */
+
+mod_matrix *allocate_partial_modularity_matrix(sparse_matrix_arr *adj_matrix, int_vector *vertices_group);
+void free_mod_matrix(mod_matrix *mat);
+
 /*
  * Holds eigen-value and eigen-vector pair
  */
@@ -80,6 +93,7 @@ typedef struct {
 
 eigen_pair *allocate_eigen_pair(elem value, elem_vector *vector);
 void free_eigen_pair(eigen_pair *pair);
+sparse_matrix_arr *get_partial_sparse_matrix(sparse_matrix_arr *adj_matrix, int_vector *vertices_group);
 
 
 
