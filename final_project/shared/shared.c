@@ -87,96 +87,31 @@ void print_square_matrix(square_matrix *mat) {
 }
 
 /*
- * Calculates an array storing the degree of all vertices in 'vertices_group'
- * from the adjacency matrix  'adj_matrix'
- */
-int *calculate_degree_of_vertices(sparse_matrix_arr *adj_matrix, int_vector *vertices_group) {
-	int *degrees_array;
-	int i;
-	if ((degrees_array = calloc(vertices_group->n, sizeof(int))) == NULL) {
-		MEMORY_ALLOCATION_FAILURE_AT("calculate_degree_of_vertices: degrees_array");
-		return NULL;
-	}
-	/*Calculate and store degree of vertices*/
-	for(i=0; i<vertices_group->n; i++) {
-		degrees_array[i] = degree_of_vertice(vertices_group->values[i], adj_matrix);
-	}
-	return degrees_array;
-}
-
-elem *calculate_F_g_array(sparse_matrix_arr *adj_matrix, int_vector *vertices_group, int *K) {
-	elem *F_g;
-	elem A_i_j;
-	int i,j;
-	int mat_val_index; /* An index to scan the sparse matrix values*/
-	if ((F_g = calloc(vertices_group->n, sizeof(elem))) == NULL) {
-		MEMORY_ALLOCATION_FAILURE_AT("calculate_F_g_array: F_g");
-		return NULL;
-	}
-	for(i=0; i<vertices_group->n; i++) {
-		F_g[i] = 0;
-		mat_val_index = adj_matrix->rowptr[vertices_group->values[i]];
-		for(j=0; j<vertices_group->n; j++) {
-			if (mat_val_index < adj_matrix->rowptr[vertices_group->values[i]+1]) {
-				/* we are still in values for row i; */
-				/* first we need to advance the sparse matrix pointer to at least column j*/
-				while(mat_val_index < adj_matrix->rowptr[vertices_group->values[i]+1] &&
-						adj_matrix->colind[mat_val_index] < vertices_group->values[j]) {
-					mat_val_index++;
-				}
-				/* if its in adj_matrix values, take it, otherwise it's 0*/
-				/* first condition makes sure we don't overflow from the array boundaries */
-				if (mat_val_index < adj_matrix->rowptr[adj_matrix->n] &&
-						adj_matrix->colind[mat_val_index] == vertices_group->values[j]) {
-					A_i_j = adj_matrix->values[mat_val_index];
-					mat_val_index++;
-				} else {
-					A_i_j = 0;
-				}
-			} else {
-				/* there are no more values for this row, meaning value is 0 */
-				A_i_j = 0;
-			}
-			/* next line calculates: F_g[i] = Sum(Over all j in vgroup)[B[g]_i_j]*/
-			F_g[i] = F_g[i] +  A_i_j - (((elem)(K[i]*K[j]))/adj_matrix->rowptr[adj_matrix->n]);
-		}
-	}
-	return F_g;
-}
-
-/*
  * Computes the value at row i column j of the modularity matrix (non generalized one!!!) for a given vertices group
  * parameter K is an array containing the degrees of vertices in the group
  */
-elem modularity_matrix_cell(sparse_matrix_arr *adj_matrix, int_vector *vertices_group, int *K, int i, int j) {
-	elem A_i_j;
+elem modularity_matrix_cell(mod_matrix *mod_mat, int i, int j) {
+	elem A_i_j, B_i_j;
 	int mat_val_index; /* An index to scan the sparse matrix values*/
 
 	/* find the corresponding A_i_j element in the sparse matrix */
-	mat_val_index = adj_matrix->rowptr[vertices_group->values[i]];
-	if (mat_val_index < adj_matrix->rowptr[vertices_group->values[i]+1]) {
-		/* we are still in values for row i; */
-		/* first we need to advance the sparse matrix pointer to at least column j*/
-		/*TODO: this can be improved using binary search*/
-		while(mat_val_index < adj_matrix->rowptr[vertices_group->values[i]+1] &&
-				adj_matrix->colind[mat_val_index] < vertices_group->values[j]) {
-			mat_val_index++;
-		}
-		/* if its in adj_matrix values, take it, otherwise it's 0*/
-		/* first condition makes sure we don't overflow from the array boundaries */
-		if (mat_val_index < adj_matrix->rowptr[adj_matrix->n] &&
-				adj_matrix->colind[mat_val_index] == vertices_group->values[j]) {
-			A_i_j = adj_matrix->values[mat_val_index];
-			mat_val_index++;
-		} else {
-			A_i_j = 0;
-		}
+	/*jump to the beginning of the row: */
+	mat_val_index = mod_mat->A_g->rowptr[i];
+	/*search for the item with colind>=j in that row*/
+	while(mat_val_index < mod_mat->A_g->rowptr[i+1] &&
+			mod_mat->A_g->colind[mat_val_index] < j) {
+		mat_val_index++;
+	}
+	if (mod_mat->A_g->colind[mat_val_index] == j) {
+		/* we found the cell value */
+		A_i_j = mod_mat->A_g->values[mat_val_index];
 	} else {
-		/* there are no more values for this row, meaning value is 0 */
+		/*cell is not in sparse matrix, hence 0*/
 		A_i_j = 0;
 	}
-	/* next few lines calculates: B_i_j = A_i_j - (K_i*K_j)/M */
-	return(A_i_j - (((elem)(K[i]*K[j]))/adj_matrix->rowptr[adj_matrix->n]));
+	/* next lines calculates: B_i_j = A_i_j - (K_i*K_j)/M */
+	B_i_j = A_i_j - (((elem)(mod_mat->K->values[i]*mod_mat->K->values[j]))/mod_mat->total_degree);
+	return B_i_j;
 }
 
 /*
@@ -184,44 +119,33 @@ elem modularity_matrix_cell(sparse_matrix_arr *adj_matrix, int_vector *vertices_
  * parameter K is an array containing the degrees of vertices in the group
  * parameter F_g should be calculated from calculate_F_g_array
  */
-elem generalized_modularity_matrix_cell(sparse_matrix_arr *adj_matrix, int_vector *vertices_group, int *K, elem *F_g, int i, int j) {
-	elem B_i_j = modularity_matrix_cell(adj_matrix, vertices_group, K, i, j);
+elem generalized_modularity_matrix_cell(mod_matrix *mod_mat, int i, int j) {
+	elem B_i_j = modularity_matrix_cell(mod_mat, i, j);
 	if (i == j)
-		return B_i_j - F_g[i];
+		return B_i_j - mod_mat->f_g->values[i];
 	else
 		return B_i_j;
 }
 
-void print_modularity_matrix(sparse_matrix_arr *adj_matrix, int_vector *vertices_group) {
+void print_modularity_matrix(mod_matrix *mod_mat) {
 	int i,j;
-	elem *F_g;
-	int *K;
-	if ((K = calculate_degree_of_vertices(adj_matrix, vertices_group)) == NULL) {
-		return;
-	}
-	if ((F_g = calculate_F_g_array(adj_matrix, vertices_group, K)) == NULL) {
-		free(K);
-		return;
-	}
-	for(i=0; i<vertices_group->n; i++) {
-		for(j=0; j<vertices_group->n; j++) {
-			printf("%f ", generalized_modularity_matrix_cell(adj_matrix, vertices_group, K, F_g, i, j));
+	for(i=0; i<mod_mat->A_g->n; i++) {
+		for(j=0; j<mod_mat->A_g->n; j++) {
+			printf("%f ", generalized_modularity_matrix_cell(mod_mat, i, j));
 		}
-		if (i<vertices_group->n-1)
+		if (i<(mod_mat->A_g->n-1))
 			printf("\r\n");
 	}
-	free(F_g);
-	free(K);
 }
 
-elem calculate_matrix_first_norm(sparse_matrix_arr *adj_matrix, int_vector *vertices_group, int *K, elem *F_g) {
-	int i,j;
+elem calculate_matrix_first_norm(mod_matrix *mod_mat) {
+	int new_j,i;
 	elem result=0, accumulator;
 	elem val_at_i_j;
-	for(j=0; j<vertices_group->n; j++) {
+	for(i=0; i<mod_mat->A_g->n; i++) {
 		accumulator = 0;
-		for(i=0; i<vertices_group->n; i++) {
-			val_at_i_j = generalized_modularity_matrix_cell(adj_matrix, vertices_group, K, F_g, i, j);
+		for(new_j=0; new_j<mod_mat->A_g->n; new_j++) {
+			val_at_i_j = generalized_modularity_matrix_cell(mod_mat, new_j, i);
 			accumulator = accumulator + fabs(val_at_i_j);
 		}
 		if (accumulator > result)
@@ -229,13 +153,13 @@ elem calculate_matrix_first_norm(sparse_matrix_arr *adj_matrix, int_vector *vert
 	}
 	return result;
 }
-
+#ifdef FALSE_DEFINITION
 square_matrix *calculate_modularity_matrix(sparse_matrix_arr *adj_matrix, int_vector *vgroup) {
 	square_matrix *mod_mat;
 	int i,j, pos, mat_val_index=0;
 	elem A_i_j;
-	elem *F_g;
-	int *K;
+	elem_vector *F_g;
+	elem_vector *K;
 	if ((mod_mat = allocate_square_matrix(vgroup->n)) == NULL) {
 		MEMORY_ALLOCATION_FAILURE_AT("calculate_modularity_matrix: mod_mat");
 		return NULL;
@@ -247,7 +171,7 @@ square_matrix *calculate_modularity_matrix(sparse_matrix_arr *adj_matrix, int_ve
 	}
 	if ((K = calculate_degree_of_vertices(adj_matrix, vgroup)) == NULL) {
 		free(mod_mat);
-		free(F_g);
+		free_elem_vector(F_g);
 		return NULL;
 	}
 	for(i=0; i<vgroup->n; i++) {
@@ -289,6 +213,65 @@ square_matrix *calculate_modularity_matrix(sparse_matrix_arr *adj_matrix, int_ve
 	free(K);
 	return mod_mat;
 }
+
+#endif
+
+/*
+ * Calculates an array storing the degree of all vertices in 'vertices_group'
+ * from the adjacency matrix  'adj_matrix'
+ */
+elem_vector *calculate_degree_of_vertices(sparse_matrix_arr *adj_matrix, int_vector *vertices_group) {
+	elem_vector *result;
+	int i;
+	if ((result = allocate_elem_vector(vertices_group->n)) == NULL) {
+		return NULL;
+	}
+	/*Calculate and store degree of vertices*/
+	for(i=0; i<vertices_group->n; i++) {
+		result->values[i] = degree_of_vertice(vertices_group->values[i], adj_matrix);
+	}
+	return result;
+}
+
+elem_vector *calculate_F_g_array(mod_matrix *mod_mat) {
+	elem_vector *result;
+	elem A_i_j;
+	int i,j;
+	int mat_index; /* An index to scan the sparse matrix values*/
+	if ((result = allocate_elem_vector(mod_mat->A_g->n)) == NULL) {
+		return NULL;
+	}
+	for(i=0; i<mod_mat->A_g->n; i++) {
+		result->values[i] = 0;
+		mat_index = mod_mat->A_g->rowptr[i];
+		for(j=0; j<mod_mat->A_g->n; j++) {
+			if (mat_index < mod_mat->A_g->rowptr[i+1]) {
+				/* we are still in values for row i; */
+				/* first we need to advance the sparse matrix pointer to at least column j*/
+				while(mat_index < mod_mat->A_g->rowptr[i+1] &&
+						mod_mat->A_g->colind[mat_index] < j) {
+					mat_index++;
+				}
+				/* if its in adj_matrix values, take it, otherwise it's 0*/
+				/* first condition makes sure we don't overflow from the array boundaries */
+				if (mat_index < mod_mat->A_g->rowptr[mod_mat->A_g->n] &&
+						mod_mat->A_g->colind[mat_index] == j) {
+					A_i_j = mod_mat->A_g->values[mat_index];
+					mat_index++;
+				} else {
+					A_i_j = 0;
+				}
+			} else {
+				/* there are no more values for this row, meaning value is 0 */
+				A_i_j = 0;
+			}
+			/* next line calculates: F_g[i] = Sum(Over all j in vgroup)[B[g]_i_j]*/
+			result->values[i] += A_i_j - (((elem)(mod_mat->K->values[i]*mod_mat->K->values[j]))/mod_mat->total_degree);
+		}
+	}
+	return result;
+}
+
 
 elem_vector *mat_vec_multiply(square_matrix *mat, elem_vector *vec) {
 	int i, j;
@@ -377,7 +360,7 @@ void vec_normalize(elem_vector *vec) {
 	}
 }
 
-elem_vector *sparse_mat_vec_multiply(const sparse_matrix_arr *A, elem_vector *v) {
+elem_vector *sparse_mat_vec_multiply(sparse_matrix_arr *A, elem_vector *v) {
 	int j, val_index;
 	elem_vector *result;
 	if ((result = allocate_elem_vector(v->n)) == NULL) {
@@ -453,7 +436,7 @@ elem_vector *int_array_to_elem_vector_by_group(int *arr, int_vector *vertices_gr
 		result->values[i] = arr[vertices_group->values[i]];
 	return result;
 }
-
+#ifdef FALSE_DEFINITION
 eigen_pair *calculate_dominant_eigen_pair(sparse_matrix_arr *adj_matrix, int_vector *vertices_group, int *K, elem *F_g, double precision) {
 	elem_vector *X, *X_next, *temp, *temp2; /* represent X[0], x[1]... from the algorithm */
 	elem_vector *K_g;
@@ -514,15 +497,97 @@ eigen_pair *calculate_dominant_eigen_pair(sparse_matrix_arr *adj_matrix, int_vec
 	free_elem_vector(X);
 	return result;
 }
-
-eigen_pair *calculate_leading_eigen_pair(sparse_matrix_arr *adj_matrix, int_vector *vertices_group, int *K, elem *F_g, double precision) {
-	eigen_pair *result;
-	elem first_norm_of_mod_mat;
-	if ((result = calculate_dominant_eigen_pair(adj_matrix, vertices_group, K, F_g, precision)) == NULL) {
+#endif
+elem_vector *pure_mod_mat_vec_multiply(mod_matrix *Bijtag, elem_vector *vec) {
+	elem_vector *result;
+	elem_vector *kgx_M_kg, *Agx;
+	int i;
+	if ((result = allocate_elem_vector(Bijtag->A_g->n)) == NULL) {
 		return NULL;
 	}
-	first_norm_of_mod_mat = calculate_matrix_first_norm(adj_matrix, vertices_group, K, F_g);
-	result->value -= first_norm_of_mod_mat;
+	/* ( (K[g]*X)/M )*K[g]  */
+	if ((kgx_M_kg = elem_vec_multiply(vec_vec_multiply(Bijtag->K, vec)/Bijtag->total_degree, Bijtag->K)) == NULL) {
+		free(result);
+		return NULL;
+	}
+	if((Agx = sparse_mat_vec_multiply(Bijtag->A_g, vec)) == NULL) {
+		free_elem_vector(kgx_M_kg);
+		free(result);
+		return NULL;
+	}
+	for (i = 0; i<Bijtag->A_g->n; i++){
+		result->values[i] = Agx->values[i]-kgx_M_kg->values[i];
+	}
+	return result;
+}
+
+elem_vector *gen_mod_mat_vec_multiply(mod_matrix *Bijtag, elem_vector *vec) {
+	int i;
+	elem_vector *result;
+	if((result = pure_mod_mat_vec_multiply(Bijtag,vec)) == NULL) {
+		return NULL;
+	}
+	for(i = 0; i<Bijtag->A_g->n; i++){
+		result->values[i] -= Bijtag->f_g->values[i]*vec->values[i];
+	}
+	return result;
+}
+
+elem_vector *shifted_gen_mod_mat_vec_multiply(mod_matrix *Bijtag, elem_vector *vec) {
+	elem_vector *result;
+	int i;
+	if((result = gen_mod_mat_vec_multiply(Bijtag, vec)) == NULL) {
+		return NULL;
+	}
+	for(i = 0; i<Bijtag->A_g->n; i++){
+		result->values[i]+=Bijtag->norm_1*vec->values[i];
+	}
+	return result;
+}
+
+eigen_pair *calculate_leading_eigen_pair(mod_matrix *Bijtag, double precision) {
+	elem_vector *X=NULL, *X_next; /* represent X[0], x[1]... from the algorithm */
+	elem eigen_value, convergence_meter;
+	elem_vector *tmp_vector;
+	eigen_pair *result;
+	int i;
+	if ((X_next = allocate_elem_vector(Bijtag->A_g->n)) == NULL) {
+		/* Error allocating  */
+		/*TODO: handle error*/
+		return NULL;
+	}
+	X_next->values[0] = 1;
+	for (i=1; i<X_next->n; i++) {
+		X_next->values[i] = 0;
+	}
+	if ((tmp_vector = allocate_elem_vector(Bijtag->A_g->n)) == NULL) {
+		free_elem_vector(X_next);
+		return NULL;
+	}
+	do {
+		if (X!=NULL)
+			free_elem_vector(X);
+		X = X_next;
+		vec_normalize(X);
+		if((X_next = shifted_gen_mod_mat_vec_multiply(Bijtag,X)) == NULL) {
+			free_elem_vector(X);
+			return NULL;
+		}
+
+		eigen_value = vec_vec_multiply(X_next, X)/vec_vec_multiply(X,X);
+
+		/*tmp_vector is used to calculate eq 19: |Ax - jx| */
+		for (i=0;i<Bijtag->A_g->n;i++) {
+			tmp_vector->values[i] = X_next->values[i];
+			tmp_vector->values[i] -= eigen_value*X->values[i];
+		}
+		convergence_meter = vec_norm(tmp_vector)/vec_norm(X);
+	} while(convergence_meter>precision);
+	eigen_value -=Bijtag->norm_1;
+	if((result = allocate_eigen_pair(eigen_value, X)) == NULL) {
+		/*#TODO: free shit... */
+		return NULL;
+	}
 	return result;
 }
 
@@ -748,4 +813,30 @@ int improve_network_division(square_matrix *mod_mat, two_division *division) {
 		}
 		printf("%f\n", delta_Q);
 	} while (IS_POSITIVE(delta_Q));
+}
+
+mod_matrix *allocate_partial_modularity_matrix(sparse_matrix_arr *adj_matrix, int_vector *vertices_group) {
+	mod_matrix *mod_mat;
+	if ((mod_mat = malloc(sizeof(mod_matrix))) == NULL) {
+		MEMORY_ALLOCATION_FAILURE_AT("allocate_partial_modularity_matrix: mod_mat");
+		return NULL;
+	}
+	if ((mod_mat->A_g = get_partial_sparse_matrix(adj_matrix, vertices_group)) == NULL) {
+		free(mod_mat);
+		return NULL;
+	}
+	if ((mod_mat->K = calculate_degree_of_vertices(adj_matrix, vertices_group)) == NULL) {
+		free_sparse_matrix_arr(mod_mat->A_g);
+		free(mod_mat);
+		return NULL;
+	}
+	mod_mat->total_degree = adj_matrix->rowptr[adj_matrix->n];
+	if ((mod_mat->f_g = calculate_F_g_array(mod_mat)) == NULL) {
+		free(mod_mat->K);
+		free_sparse_matrix_arr(mod_mat->A_g);
+		free(mod_mat);
+		return NULL;
+	}
+	mod_mat->norm_1 = calculate_matrix_first_norm(mod_mat);
+	return mod_mat;
 }

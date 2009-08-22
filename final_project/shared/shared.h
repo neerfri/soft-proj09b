@@ -27,14 +27,19 @@ void print_sparse_matrix(sparse_matrix_arr *matrix);
 int degree_of_vertice(int i, sparse_matrix_arr *matrix);
 square_matrix *allocate_square_matrix(int n);
 void print_square_matrix(square_matrix *mat);
-void print_modularity_matrix(sparse_matrix_arr *adj_matrix, int_vector *vertices_group);
+void print_modularity_matrix(mod_matrix *mod_mat);
 square_matrix *calculate_modularity_matrix(sparse_matrix_arr *adj_matrix, int_vector *vgroup);
-int *calculate_degree_of_vertices(sparse_matrix_arr *adj_matrix, int_vector *vertices_group);
-elem *calculate_F_g_array(sparse_matrix_arr *adj_matrix, int_vector *vertices_group, int *K);
+elem_vector *calculate_degree_of_vertices(sparse_matrix_arr *adj_matrix, int_vector *vertices_group);
+elem_vector *calculate_F_g_array(mod_matrix *mod_mat);
 
-eigen_pair *calculate_leading_eigen_pair(sparse_matrix_arr *adj_matrix, int_vector *vertices_group, int *K, elem *F_g, double precision);
+void vec_normalize(elem_vector *vec);
+elem_vector *sparse_mat_vec_multiply(sparse_matrix_arr *A, elem_vector *v);
+
+eigen_pair *calculate_leading_eigen_pair(mod_matrix *Bijtag, double precision);
 
 two_division *divide_network_in_two(square_matrix *mod_mat, eigen_pair *leading_eigen_pair);
 int improve_network_division(square_matrix *mod_mat, two_division *division);
+
+mod_matrix *allocate_partial_modularity_matrix(sparse_matrix_arr *adj_matrix, int_vector *vertices_group);
 
 #endif /* __FINAL_PROJECT_SHARED_H */

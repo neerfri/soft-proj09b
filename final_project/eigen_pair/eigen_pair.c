@@ -3,10 +3,9 @@
 int main(int argc, char **argv) {
 	sparse_matrix_arr* adj_matrix;
 	int_vector *vgroup;
-	elem *F_g;
-	int *K;
 	eigen_pair *leading_eigen_pair;
 	double precision;
+	mod_matrix *Bijtag;
 	if (argc < 4) {
 		fprintf(stderr, "Invalid Arguments, Aborting.\n");
 		fprintf(stderr, "Usage: %s <adjacency-mat-file> <group-file> <precision>\n", argv[0]);
@@ -26,18 +25,12 @@ int main(int argc, char **argv) {
 		free_sparse_matrix_arr(adj_matrix);
 		return EXIT_FAILURE;
 	}
-	if ((K = calculate_degree_of_vertices(adj_matrix, vgroup)) == NULL) {
-		free_sparse_matrix_arr(adj_matrix);
+	if ((Bijtag = allocate_partial_modularity_matrix(adj_matrix, vgroup)) == NULL) {
 		free_int_vector(vgroup);
+		free_sparse_matrix_arr(adj_matrix);
 		return EXIT_FAILURE;
 	}
-	if ((F_g = calculate_F_g_array(adj_matrix, vgroup, K)) == NULL) {
-		free_sparse_matrix_arr(adj_matrix);
-		free_int_vector(vgroup);
-		free(K);
-		return EXIT_FAILURE;
-	}
-	leading_eigen_pair = calculate_leading_eigen_pair(adj_matrix, vgroup, K, F_g, precision);
+	leading_eigen_pair = calculate_leading_eigen_pair(Bijtag, precision);
 #ifdef FALSE_DEFINITION
 	if ((modularity_matrix = calculate_modularity_matrix(adj_matrix, vgroup)) == NULL) {
 		/* Failed calculating modularity matrix */

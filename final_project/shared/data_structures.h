@@ -75,9 +75,9 @@ typedef struct  {
 	 * the vertices group that mod_matrix represents */
 	sparse_matrix_arr *A_g;
 	elem norm_1;		/* The one-norm of the modularity matrix */
-	elem_vector *K;		/* the degrees of each vertex */
+	elem_vector *K;			/* the degrees of each vertex */
 	elem total_degree;	/* The total degree of it's adjacency matrix (M in docs) */
-	elem_vector *f_g;		/* A vector with the f[g] function for each row */
+	elem_vector *f_g;			/* A vector with the f[g] function for each row */
 } mod_matrix;			/* modularity_matrix */
 
 mod_matrix *allocate_partial_modularity_matrix(sparse_matrix_arr *adj_matrix, int_vector *vertices_group);
