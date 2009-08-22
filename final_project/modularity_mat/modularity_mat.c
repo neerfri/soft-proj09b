@@ -8,6 +8,7 @@
 int main(int argc, char **argv) {
 	sparse_matrix_arr* adj_matrix;
 	int_vector *vgroup;
+	mod_matrix *Bijtag;
 	if (argc < 3) {
 		fprintf(stderr, "Invalid Arguments, Aborting.\n");
 		fprintf(stderr, "Usage: %s <adjacency-mat-file> <group-file>\n", argv[0]);
@@ -22,8 +23,13 @@ int main(int argc, char **argv) {
 		free_sparse_matrix_arr(adj_matrix);
 		return EXIT_FAILURE;
 	}
+	if ((Bijtag = allocate_partial_modularity_matrix(adj_matrix, vgroup)) == NULL) {
+		free_int_vector(vgroup);
+		free_sparse_matrix_arr(adj_matrix);
+		return EXIT_FAILURE;
+	}
 	printf("%d \r\n", vgroup->n);
-	print_modularity_matrix(adj_matrix, vgroup);
+	print_modularity_matrix(Bijtag);
 	free_sparse_matrix_arr(adj_matrix);
 	free_int_vector(vgroup);
 	return EXIT_SUCCESS;
