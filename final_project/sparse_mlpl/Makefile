@@ -1,5 +1,4 @@
-CFLAGS  =  -Wall -g -ansi -pedantic-errors -I. -I./../shared -lm -L../shared
-CC = gcc
+include ./../shared/Makefile.common
 PROJ_NAME = sparse_matrix
 LIB_SOURCES := $(wildcard ./../shared/*.c)
 LIBS = $(foreach LIB_NAME,$(basename $(LIB_SOURCES)), $(LIB_NAME).o)

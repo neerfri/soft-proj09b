@@ -1,5 +1,4 @@
-CFLAGS  =  -Wall -g -ansi -pedantic-errors -I../sparse_mlpl -L../sparse_mlpl -I../shared -L../shared -lm
-CC = gcc
+include ./../shared/Makefile.common
 PROJ_NAME = cluster
 LIB_SOURCES := $(wildcard ./../shared/*.c)
 LIBS = $(foreach LIB_NAME,$(basename $(LIB_SOURCES)), $(LIB_NAME).o)

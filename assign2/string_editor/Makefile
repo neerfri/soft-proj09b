@@ -1,4 +1,9 @@
-CFLAGS  =  -Wall -g -ansi -pedantic-errors
+ifeq ($(shell uname),Darwin)
+PEDANTIC = "" 
+else
+PEDANTIC = "-pedantic-errors"
+endif 
+CFLAGS  =  -Wall -g -ansi $(PEDANTIC) -I./../sparse_mlpl -L./../sparse_mlpl -I. -I./../shared -lm -L../shared
 CC = gcc
 
 all: string_editor

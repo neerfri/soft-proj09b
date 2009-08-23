@@ -1,5 +1,4 @@
-CFLAGS  =  -Wall -g -ansi -pedantic-errors -I ./../sparse_mlpl -L ./../sparse_mlpl
-CC = gcc
+include Makefile.common
 SOURCE_FILES := $(wildcard *.c)
 SOURCE_NAMES := $(basename $(SOURCE_FILES))
 OBJECT_FILES := $(foreach SOURCE_NAME,$(SOURCE_NAMES), $(SOURCE_NAME).o)
