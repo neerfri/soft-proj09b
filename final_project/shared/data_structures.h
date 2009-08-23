@@ -80,7 +80,6 @@ typedef struct  {
 	elem_vector *f_g;			/* A vector with the f[g] function for each row */
 } mod_matrix;			/* modularity_matrix */
 
-mod_matrix *allocate_partial_modularity_matrix(sparse_matrix_arr *adj_matrix, int_vector *vertices_group);
 void free_mod_matrix(mod_matrix *mat);
 
 /*
@@ -99,9 +98,10 @@ sparse_matrix_arr *get_partial_sparse_matrix(sparse_matrix_arr *adj_matrix, int_
 
 typedef struct {
 	elem quality;
-	int_vector *division;
+	elem delta_Q;
+	elem_vector *s_vector;
 } two_division;
 
-two_division *allocate_two_division(int n);
+two_division *allocate_two_division(elem_vector *s);
 void free_two_division(two_division *division);
 #endif /* DATA_STRUCTURES_H_ */

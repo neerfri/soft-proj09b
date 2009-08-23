@@ -60,6 +60,25 @@ void free_int_list(int_list_link head) {
 	}
 }
 
+#ifdef FALSE_DEFINITION
+int int_list_add_next_item(int_list_link *list_ptr, int val) {
+	int_list_link new_element;
+	if ((new_element = malloc(sizeof(int_list_element))) == NULL) {
+		MEMORY_ALLOCATION_FAILURE_AT("int_list_add_next_item: new_element");
+		return -1;
+	}
+	new_element->value = val;
+	if(*list_ptr == NULL) {
+		/* it's an empty list */
+		*list_ptr = new_element;
+		new_element->next = NULL;
+	} else {
+
+	}
+}
+
+#endif
+
 int_vector *allocate_int_vector(int n) {
 	int_vector *result;
 	if ((result = malloc(sizeof(int_vector))) == NULL) {
@@ -102,7 +121,12 @@ void free_elem_vector(elem_vector *vector) {
 	free(vector);
 }
 
-void free_mod_matrix(mod_matrix *mat);
+void free_mod_matrix(mod_matrix *mat) {
+	free_sparse_matrix_arr(mat->A_g);
+	free_elem_vector(mat->K);
+	free_elem_vector(mat->f_g);
+	free(mat);
+}
 
 sparse_matrix_arr *get_partial_sparse_matrix(sparse_matrix_arr *mat, int_vector *group) {
 	int i,j, mat_index;
@@ -172,20 +196,17 @@ void free_eigen_pair(eigen_pair *pair) {
 
 
 
-two_division *allocate_two_division(int n) {
+two_division *allocate_two_division(elem_vector *s) {
 	two_division *result;
 	if ((result = malloc(sizeof(two_division))) == NULL) {
 		MEMORY_ALLOCATION_FAILURE_AT("allocate_two_division: result");
 		return NULL;
 	}
-	if ((result->division = allocate_int_vector(n)) == NULL) {
-		free(result);
-		return NULL;
-	}
+	result->s_vector = s;
 	return result;
 }
 
 void free_two_division(two_division *division) {
-	free_int_vector(division->division);
+	free_elem_vector(division->s_vector);
 	free(division);
 }

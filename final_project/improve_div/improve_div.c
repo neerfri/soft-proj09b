@@ -3,7 +3,7 @@
 int main(int argc, char **argv) {
 	sparse_matrix_arr* adj_matrix;
 	int_vector *vgroup;
-	square_matrix *modularity_matrix;
+	mod_matrix *Bijtag;
 	eigen_pair *leading_eigen_pair;
 	two_division *division;
 	double precision;
@@ -27,45 +27,38 @@ int main(int argc, char **argv) {
 		free_sparse_matrix_arr(adj_matrix);
 		return EXIT_FAILURE;
 	}
-	if ((modularity_matrix = calculate_modularity_matrix(adj_matrix, vgroup)) == NULL) {
-		/* Failed calculating modularity matrix */
-		free_sparse_matrix_arr(adj_matrix);
+	if ((Bijtag = allocate_partial_modularity_matrix(adj_matrix, vgroup)) == NULL) {
 		free_int_vector(vgroup);
+		free_sparse_matrix_arr(adj_matrix);
 		return EXIT_FAILURE;
 	}
-	if ((leading_eigen_pair = calculate_leading_eigen_pair(modularity_matrix, precision)) == NULL) {
+	if ((leading_eigen_pair = calculate_leading_eigen_pair(Bijtag, precision)) == NULL) {
 		/* Failed calculating leading eigen pair */
 		free_sparse_matrix_arr(adj_matrix);
 		free_int_vector(vgroup);
-		free_square_matrix(modularity_matrix);
+		free_mod_matrix(Bijtag);
 		return EXIT_FAILURE;
 	}
-	if ((division = divide_network_in_two(modularity_matrix, leading_eigen_pair)) == NULL) {
+	if ((division = divide_network_in_two(Bijtag, leading_eigen_pair, 1)) == NULL) {
 		/* Failed calculating partition */
 		free_sparse_matrix_arr(adj_matrix);
 		free_int_vector(vgroup);
-		free_square_matrix(modularity_matrix);
+		free_mod_matrix(Bijtag);
 		free_eigen_pair(leading_eigen_pair);
 		return EXIT_FAILURE;
 	}
-	division->division->values[4] = division->division->values[4] * -1;
-	improve_network_division(modularity_matrix, division);
 	printf("%f\n", division->quality);
-	for(i=0; i<division->division->n; i++) {
-		if (division->division->values[i] == division->division->values[0]) {
-			printf("%d ", i);
-		}
-	}
-	printf("\n");
-	for(i=0; i<division->division->n; i++) {
-		if (division->division->values[i] != division->division->values[0]) {
+	for(i=0; i<division->s_vector->n; i++) {
+		if (division->s_vector->values[i] == division->s_vector->values[0]) {
 			printf("%d ", vgroup->values[i]);
 		}
 	}
-	/*
-	printf("%f\n", leading_eigen_pair->value);
-	print_elem_vector(leading_eigen_pair->vector->values, leading_eigen_pair->vector->n);
-	*/
+	printf("\n");
+	for(i=0; i<division->s_vector->n; i++) {
+		if (division->s_vector->values[i] != division->s_vector->values[0]) {
+			printf("%d ", vgroup->values[i]);
+		}
+	}
 	printf("\n");
 	return EXIT_SUCCESS;
 }
