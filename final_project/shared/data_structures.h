@@ -103,4 +103,13 @@ typedef struct {
 
 two_division *allocate_two_division(elem_vector *s);
 void free_two_division(two_division *division);
+
+typedef struct {
+	elem quality;
+	int_vector *p_groups;
+} n_division;
+
+n_division *allocate_n_division(int_vector *p_groups);
+void free_n_division(n_division *division);
+
 #endif /* DATA_STRUCTURES_H_ */

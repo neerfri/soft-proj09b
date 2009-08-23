@@ -739,30 +739,183 @@ mod_matrix *allocate_partial_modularity_matrix(sparse_matrix_arr *adj_matrix, in
 	return mod_mat;
 }
 
-two_division *algorithm3(sparse_matrix_arr *adj_matrix, double precision, int use_improve) {
-	two_division *final_div;
-	elem_vector *groups;
-	int i;
-	groups = allocate_elem_vector(adj_matrix->n);
-	for(i=0; i<adj_matrix->n; i++) {
-		groups->values[i] = i%3;
+
+
+/* Runs Algorithm 2 and returns a new devision, given the Adjacency matrix
+	If use_imporve is on, runs algorithm 4*/
+two_division *algorithm2(sparse_matrix_arr *adj_matrix, int_vector *vgroup, double precision, int use_improve){
+	mod_matrix *Bijtag;
+	eigen_pair *leading_eigen_pair;
+	two_division *division;
+
+	if ((Bijtag = allocate_partial_modularity_matrix(adj_matrix, vgroup)) == NULL) {
+		return NULL;
 	}
-	final_div = allocate_two_division(groups);
-	final_div->quality = 123;
-	return final_div;
+	if ((leading_eigen_pair = calculate_leading_eigen_pair(Bijtag, precision)) == NULL) {
+		/* Failed calculating leading eigen pair */
+		free_mod_matrix(Bijtag);
+		return NULL;
+	}
+	if ((division = divide_network_in_two(Bijtag, leading_eigen_pair, use_improve)) == NULL) {
+		/* Failed calculating partition */
+		free_mod_matrix(Bijtag);
+		free_eigen_pair(leading_eigen_pair);
+		return NULL;
+	}
+
+	free_mod_matrix(Bijtag);
+	free_eigen_pair(leading_eigen_pair);
+	return division;
 }
 
-void print_clusters(two_division *division) {
+/* Implementing Algorithm 3 */
+
+n_division* algorithm3 (sparse_matrix_arr *adj_matrix, double precision, int use_improve){
+	int n_groups = 0; /* counts number of groups in P */
+	int i, j;
+	int n = adj_matrix->n; /* number of vertices */
+	int_vector *is_divisable; /* indicated whether a group is divisable */
+	int_vector *vgroup;
+	int next_divisable_group;
+	int group_size;
+	two_division* division;
+	int n_div1; /* Marks the size of the +1 group in a two-division */
+
+	int_vector* p_groups;
+	n_division* res;
+	
+	/* Allocate and Init res */
+	if ((p_groups = allocate_int_vector(n)) == NULL){
+		/* allocation failed */ 
+		return NULL;
+	}
+	if ((res = allocate_n_division(p_groups)) == NULL) {
+		/* allocation failed */ 
+		return NULL;
+	}
+	res->quality = 0.0;
+	for (i = 0; i < n; i++){
+		res->p_groups->values[i] = -1;
+	}
+
+	/* Allocate and Init is_divisable */
+	if ((is_divisable = allocate_int_vector(n+1)) == NULL){
+		/* allocation failed */ 
+		free_n_division(res);
+		return NULL;
+	}
+
+	/* First we want to remove singletons */
+	for (i = 0; i < n; ++i){
+		if (adj_matrix->rowptr[i] == adj_matrix->rowptr[i+1]){
+			res->p_groups->values[i] = n_groups;
+			is_divisable->values[n_groups] = 0;
+			++n_groups;
+		}
+	}
+
+	if (n_groups == n) {
+		next_divisable_group = -1;
+	}
+	else {
+		/* Now fill in the "last" group which is the group with every node
+		which isn't a singleton */
+		for (i = 0; i < n; i++) {
+			if (res->p_groups->values[i] == -1)
+				res->p_groups->values[i] = n_groups;
+		}
+		++n_groups;
+
+		is_divisable->values[n_groups-1] = 1;
+		next_divisable_group = n_groups-1;
+	}
+	
+	while (next_divisable_group >= 0){
+		group_size = 0;
+		for (i = 0; i < n; i ++){
+			if (res->p_groups->values[i] == next_divisable_group){
+				group_size++;
+			}
+		}
+		if ((vgroup = allocate_int_vector(group_size)) == NULL){
+			/* allocation failed */
+			free_n_division(res);
+			free_int_vector(is_divisable);
+			return NULL;
+		}
+
+		/* filling vgroup with its relevant vertices */
+		j = 0;
+		for (i = 0; j < group_size; ++i){
+			if (res->p_groups->values[i] == next_divisable_group){
+				vgroup->values[j++] = i; 
+			}
+		}
+
+		if ((division = algorithm2(adj_matrix, vgroup, precision, use_improve)) == NULL) {
+			/* Error in algorithm2! */
+			free_n_division(res);
+			free_int_vector(is_divisable);
+			free_int_vector(vgroup);
+			return NULL;
+		}
+		else {
+			/* Now we count how big is the +1 group */
+			n_div1 = 0;
+			for (i = 0; i < group_size; i++) {
+				n_div1 += (division->s_vector->values[i] > 0) ? 1 : 0;
+			}
+			if ((n_div1 == 0) || (n_div1 == group_size)) {
+				/* No division found... */
+				is_divisable->values[next_divisable_group] = 0;
+			}
+			else {
+				/* Woohoo! New division! 
+				The division is a two-division, i.e. +1 / -1, and so we need
+				to screen the new groups using vgroup and the division we got */
+				res->quality += division->quality;
+				for (i = 0; i < group_size; i++) {
+					if (division->s_vector->values[i] > 0) {
+						res->p_groups->values[vgroup->values[i]] = n_groups;
+					}
+				}
+				n_groups++;
+
+				is_divisable->values[n_groups-1] = (n_div1 > 1) ? 1 : 0;
+				is_divisable->values[next_divisable_group] = 
+					((group_size-n_div1) > 1) ? 1 : 0;
+			}
+
+			free_two_division(division);
+		}
+
+		/* Free the vgroup, there is no use of it anymore */
+		free_int_vector(vgroup);
+		
+		/* Check if there are more divisable groups */
+		while ((next_divisable_group < n_groups) && 
+			(!is_divisable->values[next_divisable_group])) {
+				next_divisable_group++;
+		}
+		if (next_divisable_group == n_groups) next_divisable_group = -1;
+	}
+	
+	free_int_vector(is_divisable);
+	
+	return res;
+}
+
+void print_clusters(n_division *division) {
 	int i;
 	int last_marker;
 	int *was_printed;
-	if((was_printed = calloc(division->s_vector->n, sizeof(int))) == NULL) {
+	if((was_printed = calloc(division->p_groups->n, sizeof(int))) == NULL) {
 		return;
 	}
-	for(last_marker=0;last_marker<division->s_vector->n; last_marker++) {
+	for(last_marker=0;last_marker<division->p_groups->n; last_marker++) {
 		if (!was_printed[last_marker]) {
-			for(i=last_marker; i<division->s_vector->n; i++) {
-				if(division->s_vector->values[i] == division->s_vector->values[last_marker]) {
+			for(i=last_marker; i<division->p_groups->n; i++) {
+				if(division->p_groups->values[i] == division->p_groups->values[last_marker]) {
 					/* this value belongs to the group we now print... */
 					printf("%d ", i);
 					was_printed[i] = 1;

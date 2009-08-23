@@ -42,7 +42,13 @@ two_division *divide_network_in_two(mod_matrix *mod_mat, eigen_pair *leading_eig
 int improve_network_division(mod_matrix *mod_mat, two_division *division);
 
 mod_matrix *allocate_partial_modularity_matrix(sparse_matrix_arr *adj_matrix, int_vector *vertices_group);
-two_division *algorithm3(sparse_matrix_arr *adj_matrix, double precision, int use_improve);
-void print_clusters(two_division *division);
+void print_clusters(n_division *division);
+
+/* Runs Algorithm 2 and returns a new devision, given the Adjacency matrix
+	If use_imporve works, runs algorithm 4*/
+two_division *algorithm2(sparse_matrix_arr *adj_matrix, int_vector *vgroup, double precision, int use_improve);
+
+/* Implementing Algorithm 3 */
+n_division* algorithm3 (sparse_matrix_arr *adj_matrix, double precision, int use_improve);
 
 #endif /* __FINAL_PROJECT_SHARED_H */

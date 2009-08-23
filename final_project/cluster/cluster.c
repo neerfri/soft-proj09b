@@ -3,7 +3,8 @@
 int main(int argc, char **argv) {
 	sparse_matrix_arr* adj_matrix;
 	double precision;
-	two_division *final_division;
+	n_division *final_division;
+	int i,max_group_index = 0;
 	if (argc < 3) {
 		fprintf(stderr, "Invalid Arguments, Aborting.\n");
 		fprintf(stderr, "Usage: %s <adjacency-mat-file> <group-file> <precision>\n", argv[0]);
@@ -22,6 +23,10 @@ int main(int argc, char **argv) {
 		free_sparse_matrix_arr(adj_matrix);
 		return EXIT_FAILURE;
 	}
+	for(i=0; i<final_division->p_groups->n;i++)
+		if (max_group_index<final_division->p_groups->values[i])
+			max_group_index = final_division->p_groups->values[i];
+	printf("%d %lf\n",max_group_index+1, final_division->quality);
 	print_clusters(final_division);
 	return EXIT_SUCCESS;
 }

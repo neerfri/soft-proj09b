@@ -210,3 +210,19 @@ void free_two_division(two_division *division) {
 	free_elem_vector(division->s_vector);
 	free(division);
 }
+
+
+n_division *allocate_n_division(int_vector *p_groups) {
+	n_division *result;
+	if ((result = malloc(sizeof(n_division))) == NULL) {
+		MEMORY_ALLOCATION_FAILURE_AT("allocate_n_division: result");
+		return NULL;
+	}
+	result->p_groups = p_groups;
+	return result;
+}
+
+void free_n_division(n_division *division) {
+	free_elem_vector(division->p_groups);
+	free(division);
+}
