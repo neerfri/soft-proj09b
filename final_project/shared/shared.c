@@ -498,7 +498,6 @@ elem calculate_modularity_score(mod_matrix *mod_mat,elem_vector *s) {
 two_division *divide_network_in_two(mod_matrix *mod_mat, eigen_pair *leading_eigen_pair, int use_improve) {
 	elem_vector *s;
 	two_division *result;
-	int i;
 	if (IS_POSITIVE(leading_eigen_pair->value)) {
 		if ((s = get_s_vector_for(leading_eigen_pair->vector)) == NULL) {
 			return NULL;
@@ -508,45 +507,48 @@ two_division *divide_network_in_two(mod_matrix *mod_mat, eigen_pair *leading_eig
 			return NULL;
 		}
 		if (use_improve != 0) {
-			imrove_network_division(mod_mat, result);
+			if(improve_network_division(mod_mat, result) == 0) {
+				free_two_division(result); /*also frees s !!! */
+				return NULL;
+			}
 		}
 		result->quality = calculate_modularity_score(mod_mat, s);
 		if (IS_POSITIVE(result->quality)) {
 			return result;
 		}
-		free_two_division(result);
+		free_two_division(result); /*also frees s !!! */
 		return NULL;
 	}
 	return NULL;
 }
 
-int imrove_network_division(mod_matrix *mod_mat, two_division *division) {
+int improve_network_division(mod_matrix *mod_mat, two_division *division) {
 	int_list_link unmoved = NULL, ptr, ptr_to_j_tag;
 	int *indices;
-	int i,k,j, i_tag;
+	int i, i_tag;
 	elem Q_0, delta_Q;
 	elem *score, *improve;
 	if ((score = calloc(mod_mat->A_g->n, sizeof(elem))) == NULL) {
 		MEMORY_ALLOCATION_FAILURE_AT("improve_network_division: score");
-		return -1;
+		return 0;
 	}
 	if ((improve = calloc(mod_mat->A_g->n, sizeof(elem))) == NULL) {
 		MEMORY_ALLOCATION_FAILURE_AT("improve_network_division: improve");
 		free(score);
-		return -1;
+		return 0;
 	}
 	if ((indices = calloc(mod_mat->A_g->n, sizeof(int))) == NULL) {
 		MEMORY_ALLOCATION_FAILURE_AT("improve_network_division: indices");
 		free(score);
 		free(improve);
-		return -1;
+		return 0;
 	}
 	for(i=0; i<mod_mat->A_g->n; i++) {
 		if (unmoved == NULL) {
 			/* this is the first value, initialize unmoved pointer*/
 			if ((unmoved = malloc(sizeof(int_list_element))) == NULL) {
 				MEMORY_ALLOCATION_FAILURE_AT("imrove_network_division: unmoved");
-				return -1;
+				return 0;
 			}
 			ptr = unmoved;
 		} else {
@@ -554,7 +556,7 @@ int imrove_network_division(mod_matrix *mod_mat, two_division *division) {
 			if ((ptr->next = malloc(sizeof(int_list_element))) == NULL) {
 				MEMORY_ALLOCATION_FAILURE_AT("imrove_network_division: ptr->next");
 				free_int_list(unmoved);
-				return -1;
+				return 0;
 			}
 			ptr = ptr->next;
 		}
@@ -601,7 +603,7 @@ int imrove_network_division(mod_matrix *mod_mat, two_division *division) {
 
 		delta_Q = (i_tag==mod_mat->A_g->n-1) ? 0 : improve[i_tag];
 	} while(IS_POSITIVE(delta_Q));
-	division->delta_Q = delta_Q;
+	return(1);
 }
 
 #ifdef FALSE_DEFINITION

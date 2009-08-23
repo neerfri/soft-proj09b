@@ -98,7 +98,6 @@ sparse_matrix_arr *get_partial_sparse_matrix(sparse_matrix_arr *adj_matrix, int_
 
 typedef struct {
 	elem quality;
-	elem delta_Q;
 	elem_vector *s_vector;
 } two_division;
 

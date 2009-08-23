@@ -39,7 +39,7 @@ eigen_pair *calculate_leading_eigen_pair(mod_matrix *Bijtag, double precision);
 
 two_division *divide_network_in_two(mod_matrix *mod_mat, eigen_pair *leading_eigen_pair, int use_improve);
 /*int improve_network_division(square_matrix *mod_mat, two_division *division);*/
-int imrove_network_division(mod_matrix *mod_mat, two_division *division);
+int improve_network_division(mod_matrix *mod_mat, two_division *division);
 
 mod_matrix *allocate_partial_modularity_matrix(sparse_matrix_arr *adj_matrix, int_vector *vertices_group);
 
