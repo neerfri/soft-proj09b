@@ -498,6 +498,7 @@ elem calculate_modularity_score(mod_matrix *mod_mat,elem_vector *s) {
 two_division *divide_network_in_two(mod_matrix *mod_mat, eigen_pair *leading_eigen_pair, int use_improve) {
 	elem_vector *s;
 	two_division *result;
+	int i;
 	if (IS_POSITIVE(leading_eigen_pair->value)) {
 		if ((s = get_s_vector_for(leading_eigen_pair->vector)) == NULL) {
 			return NULL;
@@ -517,9 +518,19 @@ two_division *divide_network_in_two(mod_matrix *mod_mat, eigen_pair *leading_eig
 			return result;
 		}
 		free_two_division(result); /*also frees s !!! */
+	}
+	/*return the trivial division*/
+	if ((s = allocate_elem_vector(mod_mat->A_g->n)) == NULL) {
 		return NULL;
 	}
-	return NULL;
+	if ((result = allocate_two_division(s)) == NULL) {
+		free_elem_vector(s);
+		return NULL;
+	}
+	for(i=0; i<result->s_vector->n; i++) {
+		result->s_vector->values[i] = 1;
+	}
+	return result;
 }
 
 int improve_network_division(mod_matrix *mod_mat, two_division *division) {
@@ -726,4 +737,38 @@ mod_matrix *allocate_partial_modularity_matrix(sparse_matrix_arr *adj_matrix, in
 	}
 	mod_mat->norm_1 = calculate_matrix_first_norm(mod_mat);
 	return mod_mat;
+}
+
+two_division *algorithm3(sparse_matrix_arr *adj_matrix, double precision, int use_improve) {
+	two_division *final_div;
+	elem_vector *groups;
+	int i;
+	groups = allocate_elem_vector(adj_matrix->n);
+	for(i=0; i<adj_matrix->n; i++) {
+		groups->values[i] = i%3;
+	}
+	final_div = allocate_two_division(groups);
+	final_div->quality = 123;
+	return final_div;
+}
+
+void print_clusters(two_division *division) {
+	int i;
+	int last_marker;
+	int *was_printed;
+	if((was_printed = calloc(division->s_vector->n, sizeof(int))) == NULL) {
+		return;
+	}
+	for(last_marker=0;last_marker<division->s_vector->n; last_marker++) {
+		if (!was_printed[last_marker]) {
+			for(i=last_marker; i<division->s_vector->n; i++) {
+				if(division->s_vector->values[i] == division->s_vector->values[last_marker]) {
+					/* this value belongs to the group we now print... */
+					printf("%d ", i);
+					was_printed[i] = 1;
+				}
+			}
+			printf("\n");
+		}
+	}
 }
