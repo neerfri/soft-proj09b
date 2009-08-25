@@ -13,8 +13,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-/*
- * A structure to hold a single matrix value with it's position in the matrix
+/* A structure to hold a single matrix value with it's position in the matrix
  * this structure is used in the sparse matrix construction process
  */
 struct matrix_cell_struct
@@ -27,13 +26,18 @@ struct matrix_cell_struct
 typedef struct matrix_cell_struct matrix_cell_element;
 typedef matrix_cell_element *matrix_cell_link;
 
+/*initializes a new matrix cell with the given attributes
+ */
 matrix_cell_link new_matrix_cell(elem value, int row, int col);
 void free_matrix_cell_list(matrix_cell_link head);
+/* converts a matrix_cell_link (cell list) to a sparse_matrix_arr instance
+ * n - matrix size
+ * numNnz - Number of Non Zero elements in the matrix
+ */
 sparse_matrix_arr *create_sparse_matrix_from_list(matrix_cell_link head, int n, int numNnz);
 
 
-/*
- * This structure holds a list of integers
+/* This structure holds a list of integers
  * it is used to read groups of indexes when the group size is unknown
  */
 struct int_list_element_struct
@@ -49,7 +53,7 @@ void free_int_list(int_list_link head);
 
 /* Integer array with stored length
  * This structure is used for holding vertices groups.
- **/
+ */
 typedef struct {
 	int	n;    /* size                  */
 	int *values;
@@ -92,10 +96,16 @@ typedef struct {
 
 eigen_pair *allocate_eigen_pair(elem value, elem_vector *vector);
 void free_eigen_pair(eigen_pair *pair);
+
+/* returns a new sparse_matrix_arr that is a sub-matrix of adj_matrix
+ * including all the vertices in vertices_group
+ */
 sparse_matrix_arr *get_partial_sparse_matrix(sparse_matrix_arr *adj_matrix, int_vector *vertices_group);
 
 
-
+/* holds a division of a group of vertices to two
+ * groups with {1, -1} values for representing the groups
+ */
 typedef struct {
 	elem quality;
 	elem_vector *s_vector;
@@ -104,6 +114,9 @@ typedef struct {
 two_division *allocate_two_division(elem_vector *s);
 void free_two_division(two_division *division);
 
+/* holds a complete division of vertices to groups
+ * with {0, 1, 2, ...} values for representing the groups
+ */
 typedef struct {
 	elem quality;
 	int_vector *p_groups;
