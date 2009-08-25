@@ -44,11 +44,14 @@ void free_sparse_matrix_arr(sparse_matrix_arr* matrix) {
 }
 
 void  mult_sparse_arr(const sparse_matrix_arr *A, const elem* v, elem* result) {
-	int j, val_index;
-	for(val_index=0, j=0; val_index<A->rowptr[A->n]; val_index++) {
-		result[j] = result[j] + (A->values[val_index]*v[A->colind[val_index]]);
-		while (val_index+1>=A->rowptr[j+1])
-			j++;
+	int i, j, val_index;
+	/* this scans the matrix lines */
+	for(i=0; i<A->n; i++) {
+		/* now scan the values in that line */
+		for(val_index = A->rowptr[i]; val_index<A->rowptr[i+1]; val_index++) {
+			j = A->colind[val_index];
+			result[i] += A->values[val_index]*v[j];
+		}
 	}
 }
 

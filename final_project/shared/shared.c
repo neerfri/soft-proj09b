@@ -18,13 +18,16 @@ int degree_of_vertice(int i, sparse_matrix_arr *matrix) {
 	return matrix->rowptr[i+1]-matrix->rowptr[i];
 }
 
+
 /*
- * Computes the value at row i column j of the modularity matrix (non generalized one!!!) for a given vertices group
- * parameter K is an array containing the degrees of vertices in the group
+ * Computes the value at row i column j of the modularity
+ * matrix (non generalized one!!!) for a given vertices group
  */
-elem modularity_matrix_cell(mod_matrix *mod_mat, int i, int j) {
+elem modularity_matrix_cell\
+(mod_matrix *mod_mat, int i, int j) {
 	elem A_i_j, B_i_j;
-	int mat_val_index; /* An index to scan the sparse matrix values*/
+	/* An index to scan the sparse matrix values*/
+	int mat_val_index;
 
 	/* find the corresponding A_i_j element in the sparse matrix */
 	/*jump to the beginning of the row: */
@@ -34,7 +37,8 @@ elem modularity_matrix_cell(mod_matrix *mod_mat, int i, int j) {
 			mod_mat->A_g->colind[mat_val_index] < j) {
 		mat_val_index++;
 	}
-	if (mat_val_index < mod_mat->A_g->rowptr[i+1] && mod_mat->A_g->colind[mat_val_index] == j) {
+	if (mat_val_index < mod_mat->A_g->rowptr[i+1] && \
+			mod_mat->A_g->colind[mat_val_index] == j) {
 		/* we found the cell value */
 		A_i_j = mod_mat->A_g->values[mat_val_index];
 	} else {
@@ -42,14 +46,13 @@ elem modularity_matrix_cell(mod_matrix *mod_mat, int i, int j) {
 		A_i_j = 0;
 	}
 	/* next lines calculates: B_i_j = A_i_j - (K_i*K_j)/M */
-	B_i_j = A_i_j - (((elem)(mod_mat->K->values[i]*mod_mat->K->values[j]))/mod_mat->total_degree);
+	B_i_j = A_i_j - ((mod_mat->K->values[i]*mod_mat->K->values[j])/mod_mat->total_degree);
 	return B_i_j;
 }
 
 /*
- * Computes the value at row i column j of the generalized modularity matrix for a given vertices group
- * parameter K is an array containing the degrees of vertices in the group
- * parameter F_g should be calculated from calculate_F_g_array
+ * Computes the value at row i column j of the generalized modularity
+ * matrix for a given vertices group
  */
 elem generalized_modularity_matrix_cell(mod_matrix *mod_mat, int i, int j) {
 	elem B_i_j = modularity_matrix_cell(mod_mat, i, j);
@@ -70,6 +73,8 @@ void print_modularity_matrix(mod_matrix *mod_mat) {
 	}
 }
 
+/* calculates the first norm of mod_mat
+ */
 elem calculate_matrix_first_norm(mod_matrix *mod_mat) {
 	int new_j,i;
 	elem result=0, accumulator;
@@ -86,11 +91,11 @@ elem calculate_matrix_first_norm(mod_matrix *mod_mat) {
 	return result;
 }
 
-/*
- * Calculates an array storing the degree of all vertices in 'vertices_group'
+/* Calculates an array storing the degree of all vertices in 'vertices_group'
  * from the adjacency matrix  'adj_matrix'
  */
-elem_vector *calculate_degree_of_vertices(sparse_matrix_arr *adj_matrix, int_vector *vertices_group) {
+elem_vector *calculate_degree_of_vertices\
+(sparse_matrix_arr *adj_matrix, int_vector *vertices_group) {
 	elem_vector *result;
 	int i;
 	if ((result = allocate_elem_vector(vertices_group->n)) == NULL) {
@@ -135,8 +140,10 @@ elem_vector *calculate_F_g_array(mod_matrix *mod_mat) {
 				/* there are no more values for this row, meaning value is 0 */
 				A_i_j = 0;
 			}
-			/* next line calculates: F_g[i] = Sum(Over all j in vgroup)[B[g]_i_j]*/
-			result->values[i] += A_i_j - (((elem)(mod_mat->K->values[i]*mod_mat->K->values[j]))/mod_mat->total_degree);
+			/* next two lines calculates: F_g[i] = Sum(Over all j in vgroup)[B[g]_i_j]*/
+			result->values[i] += A_i_j;
+			result->values[i] -=((mod_mat->K->values[i]*mod_mat->K->values[j])/
+					mod_mat->total_degree);
 		}
 	}
 	return result;
@@ -151,6 +158,8 @@ elem vec_vec_multiply(elem_vector *vec1, elem_vector *vec2) {
 	return result;
 }
 
+/* calculate a vector norm: |vec|
+ */
 elem vec_norm(elem_vector *vec) {
 	return (elem)sqrt(vec_vec_multiply(vec, vec));
 }
@@ -183,7 +192,7 @@ elem_vector *sparse_mat_vec_multiply(sparse_matrix_arr *A, elem_vector *v) {
 	if ((result = allocate_elem_vector(v->n)) == NULL) {
 		return NULL;
 	}
-	/* this scans the matrix lines (meaning the result elements)*/
+	/* this scans the matrix lines */
 	for(i=0; i<A->n; i++) {
 		/* now scan the values in that line */
 		for(val_index = A->rowptr[i]; val_index<A->rowptr[i+1]; val_index++) {
@@ -202,7 +211,8 @@ elem_vector *pure_mod_mat_vec_multiply(mod_matrix *Bijtag, elem_vector *vec) {
 		return NULL;
 	}
 	/* ( (K[g]*X)/M )*K[g]  */
-	if ((kgx_M_kg = elem_vec_multiply(vec_vec_multiply(Bijtag->K, vec)/Bijtag->total_degree, Bijtag->K)) == NULL) {
+	if ((kgx_M_kg = elem_vec_multiply(vec_vec_multiply(Bijtag->K, vec)/Bijtag->total_degree,
+			Bijtag->K)) == NULL) {
 		free(result);
 		return NULL;
 	}
@@ -291,6 +301,9 @@ eigen_pair *calculate_leading_eigen_pair(mod_matrix *Bijtag, double precision) {
 	return result;
 }
 
+/* get the s vector corresponding to 'vector'
+ * meaning s[i] = sign(vector[i])
+ */
 elem_vector *get_s_vector_for(elem_vector *vector) {
 	elem_vector *s;
 	int i;
@@ -307,6 +320,8 @@ elem_vector *get_s_vector_for(elem_vector *vector) {
 	return s;
 }
 
+/* calculates 0.5*s*B[g]*s
+ */
 int calculate_modularity_score(mod_matrix *mod_mat,elem_vector *s, elem *result) {
 	elem_vector *product;
 	if ((product = gen_mod_mat_vec_multiply(mod_mat, s)) == NULL) {
@@ -317,7 +332,8 @@ int calculate_modularity_score(mod_matrix *mod_mat,elem_vector *s, elem *result)
 	return 1;
 }
 
-two_division *divide_network_in_two(mod_matrix *mod_mat, eigen_pair *leading_eigen_pair, int use_improve) {
+two_division *divide_network_in_two\
+(mod_matrix *mod_mat, eigen_pair *leading_eigen_pair, int use_improve) {
 	elem_vector *s;
 	two_division *result;
 	int i;
@@ -375,7 +391,8 @@ int init_division_score(mod_matrix *mod_mat, elem_vector *s_vector, elem *score)
 	return 1;
 }
 
-void update_division_score(mod_matrix *mod_mat, elem_vector *s_vector, int max_index, elem *score) {
+void update_division_score\
+(mod_matrix *mod_mat, elem_vector *s_vector, int max_index, elem *score) {
 	int i;
 	for (i=0;i<mod_mat->A_g->n;i++) {
 		if (i==max_index)
@@ -474,7 +491,8 @@ int improve_network_division(mod_matrix *mod_mat, two_division *division) {
 	return(1);
 }
 
-mod_matrix *allocate_partial_modularity_matrix(sparse_matrix_arr *adj_matrix, int_vector *vertices_group) {
+mod_matrix *allocate_partial_modularity_matrix\
+(sparse_matrix_arr *adj_matrix, int_vector *vertices_group) {
 	mod_matrix *mod_mat;
 	if ((mod_mat = malloc(sizeof(mod_matrix))) == NULL) {
 		MEMORY_ALLOCATION_FAILURE_AT("allocate_partial_modularity_matrix: mod_mat");
@@ -504,7 +522,8 @@ mod_matrix *allocate_partial_modularity_matrix(sparse_matrix_arr *adj_matrix, in
 
 /* Runs Algorithm 2 and returns a new devision, given the Adjacency matrix
 	If use_imporve is on, runs algorithm 4*/
-two_division *algorithm2(sparse_matrix_arr *adj_matrix, int_vector *vgroup, double precision, int use_improve){
+two_division *algorithm2\
+(sparse_matrix_arr *adj_matrix, int_vector *vgroup, double precision, int use_improve){
 	mod_matrix *Bijtag;
 	eigen_pair *leading_eigen_pair;
 	two_division *division;

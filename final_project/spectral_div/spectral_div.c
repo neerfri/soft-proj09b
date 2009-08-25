@@ -60,5 +60,10 @@ int main(int argc, char **argv) {
 		}
 	}
 	printf("\n");
+	free_sparse_matrix_arr(adj_matrix);
+	free_int_vector(vgroup);
+	free_mod_matrix(Bijtag);
+	free_eigen_pair(leading_eigen_pair);
+	free_two_division(division);
 	return EXIT_SUCCESS;
 }
