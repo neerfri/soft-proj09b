@@ -25,7 +25,8 @@ int main(int argc, char **argv) {
 	}
 	printf("%d \r\n", vgroup->n);
 	print_modularity_matrix(Bijtag);
-	free_sparse_matrix_arr(adj_matrix);
+	free_mod_matrix(Bijtag);
 	free_int_vector(vgroup);
+	free_sparse_matrix_arr(adj_matrix);
 	return EXIT_SUCCESS;
 }
