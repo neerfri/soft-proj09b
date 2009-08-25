@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
 	for(i=0; i<final_division->p_groups->n;i++)
 		if (max_group_index<final_division->p_groups->values[i])
 			max_group_index = final_division->p_groups->values[i];
-	printf("%d %lf\n",max_group_index+1, final_division->quality);
+	printf("%f %d\n", final_division->quality, max_group_index+1);
 	print_clusters(final_division);
 	return EXIT_SUCCESS;
 }
