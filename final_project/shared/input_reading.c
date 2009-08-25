@@ -41,14 +41,14 @@ sparse_matrix_arr *allocate_and_read_matrix(FILE *fp) {
 			pos = i + (j*n);
 			if (fscanf(fp, "%lf", &scanf_receptor) < 1) {
 				fprintf(stderr, "Error reading matrix values at pos: %d\n", pos);
-				/*free(values);*/
+				free_matrix_cell_list(head);
 				return NULL;
 			}
 			if (scanf_receptor != 0) {
 				numNnz++;
 				if ((temp_cell = new_matrix_cell(scanf_receptor, j, i)) == NULL) {
 					/* Error in adding value to list, need to free memory and abort */
-					/*TODO: free memory */
+					free_matrix_cell_list(head);
 					return NULL;
 				}
 				if (tail == NULL) {
@@ -64,8 +64,10 @@ sparse_matrix_arr *allocate_and_read_matrix(FILE *fp) {
 		}
 	}
 
-	if ((matrix = allocate_sparse_matrix_arr(n, numNnz)) == NULL)
+	if ((matrix = allocate_sparse_matrix_arr(n, numNnz)) == NULL) {
+		free_matrix_cell_list(head);
 		return NULL;
+	}
 	val_index = 0;
 	matrix->rowptr[0] = 0;
 	temp_cell = head;
@@ -124,6 +126,7 @@ int_vector *read_vertices_group_file(const char* file, int max_count) {
 int read_n_vertices_group(FILE *fp, int_vector *vertices, int n) {
 	int_list_link head, ptr;
 	int scanf_receptor, i;
+	int *existing_vertices;
 	head = NULL;
 	for(i=0; i < n; i++) {
 		if (feof(fp) || fscanf(fp, "%d", &scanf_receptor) < 1) {

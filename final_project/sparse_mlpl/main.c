@@ -1,14 +1,5 @@
 #include "default_includes.h"
 
-void print_sparse_matrix_data(sparse_matrix_arr *matrix) {
-	int n = matrix->rowptr[matrix->n];
-	print_elem_vector(matrix->values, n);
-	printf("\n");
-	print_int_vector(matrix->colind, n);
-	printf("\n");
-	print_int_vector(matrix->rowptr, n+1);
-}
-
 int main(void) {
 	elem *vector, *result;
 	sparse_matrix_arr* matrix;

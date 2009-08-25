@@ -103,14 +103,13 @@ elem_vector *allocate_elem_vector(int length) {
 	if((vector = malloc(sizeof(elem_vector))) == NULL) {
 		/* Error allocating  */
 		MEMORY_ALLOCATION_FAILURE_AT("allocate_elem_vector: vector");
-		/*TODO: handle error*/
 		return NULL;
 	}
 	vector->n = length;
 	if ((vector->values = calloc(length, sizeof(elem))) == NULL) {
 		/* Error allocating  */
 		MEMORY_ALLOCATION_FAILURE_AT("allocate_elem_vector: vector->values");
-		/*TODO: handle error*/
+		free(vector);
 		return NULL;
 	}
 	return vector;
@@ -181,7 +180,6 @@ eigen_pair *allocate_eigen_pair(elem value, elem_vector *vector) {
 	if ((result = malloc(sizeof(eigen_pair))) == NULL) {
 		/* Error allocating  */
 		MEMORY_ALLOCATION_FAILURE_AT("allocate_eigen_pair: result");
-		/*TODO: handle error*/
 		return NULL;
 	}
 	result->value = value;

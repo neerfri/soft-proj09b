@@ -1,8 +1,3 @@
-/*TODO:
- * validate the vertices group (values should be in range of matrix size and in increasing order)
- * catch when calculate_modularity_matrix returns NULL
- * */
-
 #include "default_includes.h"
 
 int main(int argc, char **argv) {
