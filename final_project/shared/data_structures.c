@@ -223,6 +223,6 @@ n_division *allocate_n_division(int_vector *p_groups) {
 }
 
 void free_n_division(n_division *division) {
-	free_elem_vector(division->p_groups);
+	free_int_vector(division->p_groups);
 	free(division);
 }
