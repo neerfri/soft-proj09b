@@ -138,7 +138,7 @@ sparse_matrix_arr *get_partial_sparse_matrix(sparse_matrix_arr *mat, int_vector 
 	}
 	/* initialize reverse_vgroup */
 	for(i =0, j=0; i < mat->n; i++) {
-		if(group->values[j] == i) {
+		if(j < group->n && group->values[j] == i) {
 			reverse_group->values[i] = j;
 			j++;
 		} else

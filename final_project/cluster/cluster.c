@@ -28,5 +28,7 @@ int main(int argc, char **argv) {
 			max_group_index = final_division->p_groups->values[i];
 	printf("%f %d\n", final_division->quality, max_group_index+1);
 	print_clusters(final_division);
+	free_sparse_matrix_arr(adj_matrix);
+	free_n_division(final_division);
 	return EXIT_SUCCESS;
 }

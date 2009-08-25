@@ -424,6 +424,7 @@ int improve_network_division(mod_matrix *mod_mat, two_division *division) {
 
 		/* initialize score values */
 		if (init_division_score(mod_mat, division->s_vector, score) == 0) {
+			free(unmoved);
 			free(indices);
 			free(score);
 			free(improve);
@@ -466,6 +467,7 @@ int improve_network_division(mod_matrix *mod_mat, two_division *division) {
 		delta_Q = (i_tag==mod_mat->A_g->n-1) ? 0 : improve[i_tag];
 
 	} while(IS_POSITIVE(delta_Q));
+	free(unmoved);
 	free(indices);
 	free(improve);
 	free(score);
@@ -683,4 +685,5 @@ void print_clusters(n_division *division) {
 			printf("\n");
 		}
 	}
+	free(was_printed);
 }
