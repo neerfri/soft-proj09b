@@ -32,6 +32,7 @@ int main(int argc, char **argv) {
 		free_sparse_matrix_arr(adj_matrix);
 		return EXIT_FAILURE;
 	}
+	free_sparse_matrix_arr(adj_matrix);
 	if ((leading_eigen_pair = calculate_leading_eigen_pair(Bijtag, precision)) == NULL) {
 		/* Failed calculating leading eigen pair */
 		free_sparse_matrix_arr(adj_matrix);
@@ -47,6 +48,7 @@ int main(int argc, char **argv) {
 		free_eigen_pair(leading_eigen_pair);
 		return EXIT_FAILURE;
 	}
+	free_eigen_pair(leading_eigen_pair);
 	printf("%f\n", division->quality);
 	for(i=0; i<division->s_vector->n; i++) {
 		if (division->s_vector->values[i] == division->s_vector->values[0]) {
@@ -60,5 +62,8 @@ int main(int argc, char **argv) {
 		}
 	}
 	printf("\n");
+	free_int_vector(vgroup);
+	free_two_division(division);
+	free_mod_matrix(Bijtag);
 	return EXIT_SUCCESS;
 }
