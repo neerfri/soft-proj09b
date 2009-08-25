@@ -34,5 +34,10 @@ int main(int argc, char **argv) {
 	printf("%f\n", leading_eigen_pair->value);
 	print_elem_vector(leading_eigen_pair->vector->values, leading_eigen_pair->vector->n);
 	printf("\n");
+	free_eigen_pair(leading_eigen_pair);
+	free_mod_matrix(Bijtag);
+	free_int_vector(vgroup);
+	free_sparse_matrix_arr(adj_matrix);
+
 	return EXIT_SUCCESS;
 }
