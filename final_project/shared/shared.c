@@ -52,6 +52,7 @@ void free_square_matrix(square_matrix *matrix) {
 }
 
 int degree_of_vertice(int i, sparse_matrix_arr *matrix) {
+	/*TODO: improve this using rowptr[i+1]-rowptr[i] */
 	int j, degree=0;
 	for(j=0; j<matrix->rowptr[matrix->n]; j++) {
 		if (matrix->colind[j] == i)
@@ -102,7 +103,7 @@ elem modularity_matrix_cell(mod_matrix *mod_mat, int i, int j) {
 			mod_mat->A_g->colind[mat_val_index] < j) {
 		mat_val_index++;
 	}
-	if (mod_mat->A_g->colind[mat_val_index] == j) {
+	if (mat_val_index < mod_mat->A_g->rowptr[i+1] && mod_mat->A_g->colind[mat_val_index] == j) {
 		/* we found the cell value */
 		A_i_j = mod_mat->A_g->values[mat_val_index];
 	} else {
@@ -299,54 +300,20 @@ void vec_normalize(elem_vector *vec) {
 }
 
 elem_vector *sparse_mat_vec_multiply(sparse_matrix_arr *A, elem_vector *v) {
-	int j, val_index;
+	int i, j, val_index;
 	elem_vector *result;
+	printf("."); fflush(stdout);
 	if ((result = allocate_elem_vector(v->n)) == NULL) {
 		return NULL;
 	}
-	for(val_index=0, j=0; val_index<A->rowptr[A->n]; val_index++) {
-		result->values[j] = result->values[j] + (A->values[val_index]*v->values[A->colind[val_index]]);
-		while (val_index+1>=A->rowptr[j+1])
-			j++;
-	}
-	return result;
-}
-
-/*
- * calculates the product: A[g]*vector
- * where A[g] is the sub matrix of A corresponding to
- * the rows and columns in 'vgroup' values
- */
-elem_vector *sparse_mat_vec_multiply_by_group(sparse_matrix_arr *A, int_vector *vgroup, elem_vector *vector) {
-	int i, j, val_index;
-	elem_vector *result;
-	int_vector *reverse_vgroup; /*this holds a reverese mapping to vgroup->values[i], negative in case non existent*/
-	if ((result = allocate_elem_vector(vgroup->n)) == NULL) {
-		return NULL;
-	}
-	if ((reverse_vgroup = allocate_int_vector(A->n)) == NULL) {
-		return NULL;
-	}
-	/* initialize reverse_vgroup */
-	for(i =0, j=0; i < A->n; i++) {
-		if(vgroup->values[j] == i) {
-			reverse_vgroup->values[i] = j;
-			j++;
-		} else
-			reverse_vgroup->values[i] = -1;
-	}
-	/*scan the sparse matrix*/
-	for(i=0; i < vgroup->n; i++) {
-		result->values[i] = 0;
-		val_index = A->rowptr[vgroup->values[i]];
-		for(;val_index<A->rowptr[vgroup->values[i]+1]; val_index++) {
-			if(reverse_vgroup->values[A->colind[val_index]] >= 0) {
-				/*the current column show be included in multiplication */
-				result->values[i] = result->values[i] + (A->values[val_index]*vector->values[j]);
-			}
+	/* this scans the matrix lines (meaning the result elements)*/
+	for(i=0; i<A->n; i++) {
+		/* now scan the values in that line */
+		for(val_index = A->rowptr[i]; val_index<A->rowptr[i+1]; val_index++) {
+			j = A->colind[val_index];
+			result->values[i] += A->values[val_index]*v->values[j];
 		}
 	}
-	free_int_vector(reverse_vgroup);
 	return result;
 }
 
@@ -395,6 +362,8 @@ elem_vector *pure_mod_mat_vec_multiply(mod_matrix *Bijtag, elem_vector *vec) {
 	for (i = 0; i<Bijtag->A_g->n; i++){
 		result->values[i] = Agx->values[i]-kgx_M_kg->values[i];
 	}
+	free_elem_vector(kgx_M_kg);
+	free_elem_vector(Agx);
 	return result;
 }
 
@@ -465,6 +434,8 @@ eigen_pair *calculate_leading_eigen_pair(mod_matrix *Bijtag, double precision) {
 		/*#TODO: free shit... */
 		return NULL;
 	}
+	free_elem_vector(tmp_vector);
+	free_elem_vector(X_next);
 	return result;
 }
 
@@ -484,15 +455,14 @@ elem_vector *get_s_vector_for(elem_vector *vector) {
 	return s;
 }
 
-elem calculate_modularity_score(mod_matrix *mod_mat,elem_vector *s) {
+int calculate_modularity_score(mod_matrix *mod_mat,elem_vector *s, elem *result) {
 	elem_vector *product;
-	elem result;
 	if ((product = gen_mod_mat_vec_multiply(mod_mat, s)) == NULL) {
-		return -1;
+		return 0;
 	}
-	result = 0.5*vec_vec_multiply(s, product);
+	*result = 0.5*vec_vec_multiply(s, product);
 	free_elem_vector(product);
-	return result;
+	return 1;
 }
 
 two_division *divide_network_in_two(mod_matrix *mod_mat, eigen_pair *leading_eigen_pair, int use_improve) {
@@ -508,17 +478,23 @@ two_division *divide_network_in_two(mod_matrix *mod_mat, eigen_pair *leading_eig
 			return NULL;
 		}
 		if (use_improve != 0) {
+			printf("improving network division for network of size: %d\n", mod_mat->A_g->n);
 			if(improve_network_division(mod_mat, result) == 0) {
 				free_two_division(result); /*also frees s !!! */
 				return NULL;
 			}
 		}
-		result->quality = calculate_modularity_score(mod_mat, s);
+		if (calculate_modularity_score(mod_mat, s, &result->quality) == 0) {
+			/*TODO: free memory */
+			return NULL;
+		}
 		if (IS_POSITIVE(result->quality)) {
+			printf("found a new division for a group of size: %d\n", mod_mat->A_g->n);
 			return result;
 		}
 		free_two_division(result); /*also frees s !!! */
 	}
+	printf("returning the trivial division for a group of size: %d\n", mod_mat->A_g->n);
 	/*return the trivial division*/
 	if ((s = allocate_elem_vector(mod_mat->A_g->n)) == NULL) {
 		return NULL;
@@ -534,9 +510,9 @@ two_division *divide_network_in_two(mod_matrix *mod_mat, eigen_pair *leading_eig
 }
 
 int improve_network_division(mod_matrix *mod_mat, two_division *division) {
-	int_list_link unmoved = NULL, ptr, ptr_to_j_tag;
+	int *unmoved;
 	int *indices;
-	int i, i_tag;
+	int i, j, i_tag, j_tag;
 	elem Q_0, delta_Q;
 	elem *score, *improve;
 	if ((score = calloc(mod_mat->A_g->n, sizeof(elem))) == NULL) {
@@ -554,164 +530,73 @@ int improve_network_division(mod_matrix *mod_mat, two_division *division) {
 		free(improve);
 		return 0;
 	}
-	for(i=0; i<mod_mat->A_g->n; i++) {
-		if (unmoved == NULL) {
-			/* this is the first value, initialize unmoved pointer*/
-			if ((unmoved = malloc(sizeof(int_list_element))) == NULL) {
-				MEMORY_ALLOCATION_FAILURE_AT("imrove_network_division: unmoved");
-				return 0;
-			}
-			ptr = unmoved;
-		} else {
-			/* this is not the first value, add an element to the list */
-			if ((ptr->next = malloc(sizeof(int_list_element))) == NULL) {
-				MEMORY_ALLOCATION_FAILURE_AT("imrove_network_division: ptr->next");
-				free_int_list(unmoved);
-				return 0;
-			}
-			ptr = ptr->next;
-		}
-		ptr->value = i;
-		ptr->next = NULL;
+	if ((unmoved = calloc(mod_mat->A_g->n, sizeof(int))) == NULL) {
+		MEMORY_ALLOCATION_FAILURE_AT("improve_network_division: unmoved");
+		free(indices);
+		free(score);
+		free(improve);
+		return 0;
 	}
 	do {
+		/* Initialize values in unmoved */
 		for(i=0; i<mod_mat->A_g->n; i++) {
-			Q_0 = calculate_modularity_score(mod_mat, division->s_vector);
-			for(ptr = unmoved; ptr!=NULL; ptr=ptr->next) {
-				division->s_vector->values[ptr->value] *= -1; /* s[k] = -s[k] */
-				score[ptr->value] = calculate_modularity_score(mod_mat, division->s_vector) - Q_0;
-				division->s_vector->values[ptr->value] *= -1; /* s[k] = -s[k] */
+			unmoved[i] = 1;
+		}
+
+
+		/* trying to find an improvement of the partition defined by s */
+		for(i=0; i<mod_mat->A_g->n; i++) {
+
+			if (calculate_modularity_score(mod_mat, division->s_vector, &Q_0) == 0) {
+				/*TODO: free memory */
+				return 0;
+			}
+
+			for(j=0; j<mod_mat->A_g->n; j++) {
+				division->s_vector->values[j] *= -1; /* s[k] = -s[k] */
+				if (calculate_modularity_score(mod_mat, division->s_vector, &score[j]) == 0) {
+					/*TODO: free memory */
+					return 0;
+				}
+				score[j] -= Q_0;
+				division->s_vector->values[j] *= -1; /* s[k] = -s[k] */
 			}
 
 			/* find j (ptr_to_j_tag->value) with maximal score[j] */
-			for(ptr_to_j_tag = unmoved, ptr = unmoved; ptr!=NULL; ptr=ptr->next)
-				if (score[ptr_to_j_tag->value] < score[ptr->value])
-					ptr_to_j_tag = ptr;
-
-			division->s_vector->values[ptr_to_j_tag->value] *= -1; /* S[j_tag] = -S[j_tag] */
-			indices[i] = ptr_to_j_tag->value;
-			if (i==0)
-				improve[i] = score[ptr_to_j_tag->value];
-			else
-				improve[i] = improve[i-1] + score[ptr_to_j_tag->value];
-
-			/* remove j_tag from unmoved list */
-			if(unmoved == ptr_to_j_tag) {
-				unmoved = unmoved->next;
-				free(ptr_to_j_tag);
-			} else {
-				for(ptr=unmoved; ptr->next != ptr_to_j_tag; ptr = ptr->next);
-				ptr->next = ptr->next->next;
-				free(ptr_to_j_tag);
+			for(j_tag = -1, j=0; j<mod_mat->A_g->n; j++) {
+				if (unmoved[j]) {
+					if (j_tag==-1 || score[j_tag] < score[j]) {
+						j_tag = j;
+					}
+				}
 			}
+
+
+			division->s_vector->values[j_tag] *= -1; /* S[j_tag] = -S[j_tag] */
+			indices[i] = j_tag;
+			improve[i] = score[j_tag];
+			if (i)
+				improve[i] = improve[i-1];
+			unmoved[j_tag] = 0;
+
 		}
 		/* Find the maximum improvement of s and update s accordingly */
 		for(i=0, i_tag=0; i<mod_mat->A_g->n; i++)
 			if(improve[i_tag]<improve[i])
 				i_tag = i;
+
 		for(i=mod_mat->A_g->n-1; i>i_tag; i--)
 			division->s_vector->values[indices[i]] *= -1;
 
 		delta_Q = (i_tag==mod_mat->A_g->n-1) ? 0 : improve[i_tag];
+
+		printf("\nfinished improve iteration: %f\n", delta_Q);
 	} while(IS_POSITIVE(delta_Q));
+	free(indices);
+	free(improve);
+	free(score);
 	return(1);
 }
-
-#ifdef FALSE_DEFINITION
-
-int improve_network_division(square_matrix *mod_mat, two_division *s_vector) {
-	int *unmoved, *indices;
-	int i,k,j;
-	elem Q_0, delta_Q;
-	elem *score, *improve;
-	elem_vector *s;
-	if ((s = allocate_elem_vector(mod_mat->n)) == NULL) {
-		return -1;
-	}
-	if ((score = calloc(mod_mat->n, sizeof(elem))) == NULL) {
-		MEMORY_ALLOCATION_FAILURE_AT("improve_network_division: score");
-		free_elem_vector(s);
-		return -1;
-	}
-	if ((improve = calloc(mod_mat->n, sizeof(elem))) == NULL) {
-		MEMORY_ALLOCATION_FAILURE_AT("improve_network_division: score");
-		free_elem_vector(s);
-		free(score);
-		return -1;
-	}
-	/* initialize S Vector*/
-	for(i=0; i<mod_mat->n; i++) {
-		s->values[i] = s_vector->s_vector->values[i];
-	}
-	if ((unmoved = calloc(mod_mat->n, sizeof(int))) == NULL) {
-		MEMORY_ALLOCATION_FAILURE_AT("improve_network_division: unmoved");
-		free_elem_vector(s);
-		free(score);
-		free(improve);
-		return 1;
-	}
-	if ((indices = calloc(mod_mat->n, sizeof(int))) == NULL) {
-		MEMORY_ALLOCATION_FAILURE_AT("improve_network_division: indices");
-		free_elem_vector(s);
-		free(score);
-		free(improve);
-		free(unmoved);
-		return 1;
-	}
-	do {
-		for(i=0; i<mod_mat->n; i++) {
-				unmoved[i] = 1; /*this marks all vertices as unmoved */
-		}
-		for(i=0; i<mod_mat->n; i++) {
-			Q_0 = calculate_modularity_score(mod_mat, s);
-			for(k=0; k<mod_mat->n; k++) {
-				if(unmoved[k] == 1) {
-					s->values[k] = -1 * s->values[k];
-					score[k] = (0.5 * calculate_modularity_score(mod_mat, s)) - Q_0;
-					s->values[k] = -1 * s->values[k];
-				}
-			}
-			/* find vertex j with a maximal score */
-			j=0;
-			for(k=0; k<mod_mat->n; k++) {
-				if (unmoved[k] == 1) {
-					if (unmoved[j] == 0) {
-						j = k; /*The initial chosen j was illegal, fix it. this can only happen once*/
-					} else if(score[j] < score[k]){
-						j = k;
-					}
-				}
-			}
-			/* change vertex j's group */
-			s->values[j] = -1 * s->values[j];
-			indices[i] = j;
-			if (i==0) {
-				improve[i] = score[j];
-			} else {
-				improve[i] = improve[i-1] + score[j];
-			}
-			unmoved[j] = 0;
-		}
-		/* find the maximum improvement of s and update s accordingly */
-		i = 0;
-		for(k=1; k<mod_mat->n; k++) {
-			if (improve[i] < improve[k])
-				i = k;
-		}
-		for(k=mod_mat->n-1; k>i+1; k--) {
-			j = indices[k];
-			s->values[j] = -1 * s->values[j];
-		}
-		if(i == mod_mat->n-1) {
-			delta_Q = 0;
-		} else {
-			delta_Q = improve[i];
-		}
-		printf("%f\n", delta_Q);
-	} while (IS_POSITIVE(delta_Q));
-}
-
-#endif
 
 mod_matrix *allocate_partial_modularity_matrix(sparse_matrix_arr *adj_matrix, int_vector *vertices_group) {
 	mod_matrix *mod_mat;
@@ -756,7 +641,7 @@ two_division *algorithm2(sparse_matrix_arr *adj_matrix, int_vector *vgroup, doub
 		free_mod_matrix(Bijtag);
 		return NULL;
 	}
-	if ((division = divide_network_in_two(Bijtag, leading_eigen_pair, use_improve)) == NULL) {
+	if ((division = divide_network_in_two(Bijtag, leading_eigen_pair, 1)) == NULL) {
 		/* Failed calculating partition */
 		free_mod_matrix(Bijtag);
 		free_eigen_pair(leading_eigen_pair);
