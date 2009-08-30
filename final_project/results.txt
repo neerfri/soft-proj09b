@@ -1,0 +1,3 @@
+yeast_0.bingo:
+	cluster_1: 6606 protein import into nucleus 1.0612E-32
+	cluster_2: 
