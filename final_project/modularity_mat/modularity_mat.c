@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
 		free_sparse_matrix_arr(adj_matrix);
 		return EXIT_FAILURE;
 	}
-	printf("%d \r\n", vgroup->n);
+	printf("%d\n", vgroup->n);
 	print_modularity_matrix(Bijtag);
 	free_mod_matrix(Bijtag);
 	free_int_vector(vgroup);
