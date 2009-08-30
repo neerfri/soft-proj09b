@@ -1,3 +1,55 @@
-yeast_0.bingo:
-	cluster_1: 6606 protein import into nucleus 1.0612E-32
-	cluster_2: 
+
+yeast_0:
+	Number of groups: 				39
+	Modularity: 					15735.757972
+	cluster_1: protein import into nucleus 		1.0612E-32
+	cluster_2: TOR signaling pathway 		3.0856E-6
+	cluster_3: ribosome biogenesis and assembly 	1.9564E-72
+	cluster_4: cell cycle				2.9921E-13
+	cluster_5: response to stress			1.4825E-16
+
+yeast_1:
+	Number of groups: 				14
+	Modularity: 					10806.441606
+	cluster_1: ---					---
+	cluster_2: ---					---
+	cluster_3: ---					---
+	cluster_4: ---					---
+	cluster_5: ---					---
+
+yeast_2:
+	Number of groups: 				23
+	Modularity: 					10801.682974
+	cluster_1: ---					---
+	cluster_2: ---					---
+	cluster_3: ---					---
+	cluster_4: ---					---
+	cluster_5: ---					---
+
+
+fly_0:
+	Number of groups: 				14
+	Modularity: 					16398.796074
+	cluster_1: ---					---
+	cluster_2: cellular process			3.9558E-4
+	cluster_3: ---					---
+	cluster_4: cellular process			1.0810E-5
+	cluster_5: biological regulation		4.5789E-3
+
+fly_1:
+	Number of groups: 						21
+	Modularity: 							16212.914367
+	cluster_1: cellular process					3.6125E-9
+	cluster_2: cellular component organization and biogenesis	7.1130E-5
+	cluster_3: biological regulation				6.1411E-4
+	cluster_4: cellular process					7.2541E-7
+	cluster_5: ---							---
+
+fly_2:
+	Number of groups: 						81
+	Modularity: 							20295.447283
+	cluster_1: cellular process					2.8993E-7
+	cluster_2: cellular component organization and biogenesis
+	cluster_3: ---							---
+	cluster_4: cellular process					4.4224E-9
+	cluster_5: cell cycle process					9.6021E-20
