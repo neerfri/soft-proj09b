@@ -49,7 +49,7 @@ fly_2:
 	Number of groups: 						81
 	Modularity: 							20295.447283
 	cluster_1: cellular process					2.8993E-7
-	cluster_2: cellular component organization and biogenesis
+	cluster_2: cellular component organization and biogenesis	1.3641E-8
 	cluster_3: ---							---
 	cluster_4: cellular process					4.4224E-9
 	cluster_5: cell cycle process					9.6021E-20

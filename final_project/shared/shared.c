@@ -68,8 +68,7 @@ void print_modularity_matrix(mod_matrix *mod_mat) {
 		for(j=0; j<mod_mat->A_g->n; j++) {
 			printf("%f ", generalized_modularity_matrix_cell(mod_mat, i, j));
 		}
-		if (i<(mod_mat->A_g->n-1))
-			printf("\r\n");
+		printf("\n");
 	}
 }
 
@@ -482,6 +481,7 @@ int improve_network_division(mod_matrix *mod_mat, two_division *division) {
 			division->s_vector->values[indices[i]] *= -1;
 
 		delta_Q = (i_tag==mod_mat->A_g->n-1) ? 0 : improve[i_tag];
+		division->quality += delta_Q;
 
 	} while(IS_POSITIVE(delta_Q));
 	free(unmoved);

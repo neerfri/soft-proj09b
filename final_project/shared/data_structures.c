@@ -182,6 +182,7 @@ two_division *allocate_two_division(elem_vector *s) {
 		return NULL;
 	}
 	result->s_vector = s;
+	result->quality = 0;
 	return result;
 }
 
